@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "knex": "registry:dt/knex#0.0.0+20170202190133",
+    "sql.js": "registry:dt/sql.js#0.0.0+20160915014424"
+  },
+  "globalDependencies": {
+    "node": "registry:dt/node#7.0.0+20170204020307"
+  }
+}
