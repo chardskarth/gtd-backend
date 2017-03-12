@@ -37,3 +37,15 @@ export function listContext(){
   var sql = context.joinAllSort(sortKey, { }).toString();
   return db.exec(sql).map(BaseModel.MapExecResult)[0];
 }
+
+export function setEvery() {
+}
+
+export function reset() {
+}
+
+export function set(contextId, until){
+}
+
+export function unset() {
+}
