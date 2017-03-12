@@ -10,13 +10,13 @@ import {taskagenda} from "./../model/taskagenda";
 import {taskcontext} from "./../model/taskcontext";
 import {taskfolder} from "./../model/taskfolder";
 
-export function createTask(name, description, folderId, contextId, agendaId, reminder, repeat){
+export function createTask(name, description, folderId, contextId, agendaId){
   var db = init.getDb();
   db.run("Begin");
   folder.shouldExistOrUndefined(folderId);
   context.shouldExistOrUndefined(contextId);
   agenda.shouldExistOrUndefined(agendaId);
-  task.add(name, description, reminder, repeat);
+  task.add(name, description);
   var taskId = db.exec("select last_insert_rowid();")[0].values[0][0];
   
   // if there is a folder, there is a sort there, else, theres a sort here

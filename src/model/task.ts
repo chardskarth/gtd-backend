@@ -12,15 +12,13 @@ import * as _knex from "knex";
 class Task extends BaseModel{
   static dbName: string = "task";
   constructor(){
-    super(Task.dbName, ["name", "description", "reminder", "repeat", "parenttask", "done"]);
+    super(Task.dbName, ["name", "description", "parenttask", "done"]);
   }
   createTable(db){
     var q = SQLBuilder.schema.createTableIfNotExists(Task.dbName, function (table) {
       table.increments();
       table.string("name").notNullable();
       table.string("description").notNullable();
-      table.integer("reminder");
-      table.string("repeat");
       table.integer("parenttask");
       table.boolean("done").defaultTo(false).notNullable();
     });

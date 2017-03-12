@@ -1,9 +1,9 @@
 import ConfigModule from "./config";
 import ChaosBoxModule from "./chaosbox";
 import TaskListModule from "./tasklist";
-import FolderPageModule from "./folderpage";
-import AgendaPageModule from "./agendapage";
-import ContextPageModule from "./contextpage";
+import FolderPageModule from "./folder";
+import AgendaPageModule from "./agenda";
+import ContextPageModule from "./context";
 import CmdlnCreator  from "./../helpers/CmdlnCommandCreator";
 
 var util = require('util');
@@ -19,9 +19,9 @@ util.inherits(Main, cmdln.Cmdln);
 var command = CmdlnCreator(Main);
     command.create("config", ConfigModule);
     command.create("chaosbox", ChaosBoxModule);
-    command.create("folderpage", FolderPageModule);
-    command.create("tasklist", TaskListModule);
-    command.create("agendapage", AgendaPageModule);
-    command.create("contextpage", ContextPageModule);
+    command.create("folder", FolderPageModule);
+    command.create("task", TaskListModule);
+    command.create("agenda", AgendaPageModule);
+    command.create("context", ContextPageModule);
 
 export default Main;

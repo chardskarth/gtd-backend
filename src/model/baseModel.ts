@@ -104,12 +104,9 @@ abstract class BaseModel{
     }
   }
 
-  getFieldsById(id, arrFields){
+  getById(id, arrFields){
     var sql = knex.select(arrFields).where("id", id).from(this.dbName).toString();
-    var result = this.db.exec(sql);
-    return result.map(res => {
-      return res.values[0];
-    })[0];
+    return this.db.exec(sql).map(BaseModel.MapExecResult)[0][0];
   }
 
   getAllBy(whereObj, arrFields){
