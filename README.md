@@ -22,7 +22,9 @@ then you are good to go!
 The heart of GTD would fall down to 4 things: *task*, *context*, *folder* and *agenda*.
 
 ## config
+
 `gtd config <sub_cmd>`
+
 |sub_cmd|description|
 |---|---|
 |init|create a database|
