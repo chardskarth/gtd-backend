@@ -1,6 +1,5 @@
-import {BaseModel, SQLBuilder} from "./baseModel"
-import {folder} from "./folder"
-import {task} from "./task"
+import {BaseModel, SQLBuilder} from "./baseModel";
+import {DBNames} from "./../helpers/ModelCommon";
 
 class TaskFolder extends BaseModel{
   static dbName: string = "taskfolder";

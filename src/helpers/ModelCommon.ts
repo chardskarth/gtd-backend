@@ -66,3 +66,37 @@ export function getDb(){
 export function saveDb() {
   fs.writeFileSync(FILE_NAME, new Buffer(_db.export()));
 }
+
+export var DBNames = {
+  task: "task"
+  , sort: "sort"
+  , folder: "folder"
+  , taskfolder: "taskfolder"
+  , context: "context"
+  , taskcontext: "taskcontext"
+  , agenda: "agenda"
+  , taskagenda: "taskagenda"
+}
+
+var FieldNames = {}
+var knownFields = [ "taskfolder.taskid"
+, "taskfolder.folderid"
+, "folder.id"
+, "taskcontext.taskid"
+, "taskcontext.contextid"
+, "context.id"
+, "taskagenda.taskid"
+, "taskagenda.agendaid"
+, "agenda.id" ]
+var ProxyFieldNames = new Proxy(FieldNames, {
+  get: function(target, property, receiver){
+    console.log(receiver);
+    var found = knownFields.find(x => x === property);
+    if(found) {
+      return found; 
+    } else {
+      throw Error(`${property} is not known`);
+    }
+  }
+});
+export {ProxyFieldNames as FieldNames};

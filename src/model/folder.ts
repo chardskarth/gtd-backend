@@ -1,5 +1,5 @@
 import {BaseModel, SQLBuilder} from "./baseModel"
-import {sort} from "./sort"
+import {DBNames} from "./../helpers/ModelCommon";
 
 class Folder extends BaseModel{
   static dbName: string = "folder";
@@ -20,10 +20,10 @@ class Folder extends BaseModel{
       `folder.description as description`,
       ];
     var res = SQLBuilder.select(folderFields)
-      .from(sort.dbName)
+      .from(DBNames.sort)
       .where("key", key).andWhere("tablename", folder.dbName)
       .orderBy("ordervalue")
-      .innerJoin(this.dbName, `${sort.dbName}.tableid`, `${folder.dbName}.id`);
+      .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${folder.dbName}.id`);
     return BaseModel.BuildWhere(whereObj, res);
   }
 }

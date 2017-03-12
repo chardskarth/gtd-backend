@@ -1,4 +1,4 @@
-import {createDb} from "./../model/init";
+import {createDb} from "./../helpers/ModelCommon";
 import CmdlnCreator  from "./../helpers/CmdlnCommandCreator";
 
 var util = require('util');

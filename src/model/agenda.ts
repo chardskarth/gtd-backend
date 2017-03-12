@@ -1,5 +1,5 @@
 import {BaseModel, SQLBuilder} from "./baseModel"
-import {sort} from "./sort"
+import {DBNames} from "./../helpers/ModelCommon";
 
 class Agenda extends BaseModel{
   static dbName: string = "agenda";
@@ -16,14 +16,15 @@ class Agenda extends BaseModel{
   }
   joinAllSort(key, whereObj){
     var agendaFields = [
+      `agenda.id as id`,
       `agenda.name as name`,
       `agenda.description as description`,
       ];
     var res = SQLBuilder.select(agendaFields)
-      .from(sort.dbName)
+      .from(DBNames.sort)
       .where("key", key).andWhere("tablename", agenda.dbName)
       .orderBy("ordervalue")
-      .innerJoin(this.dbName, `${sort.dbName}.tableid`, `${agenda.dbName}.id`);
+      .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${agenda.dbName}.id`);
     return BaseModel.BuildWhere(whereObj, res);
   }
 }

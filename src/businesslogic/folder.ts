@@ -1,4 +1,4 @@
-import * as init from "./../model/init";
+import {getDb} from "./../helpers/ModelCommon";
 import {BaseModel} from "./../model/baseModel";
 import {task} from "./../model/task";
 import {folder} from "./../model/folder";
@@ -7,7 +7,7 @@ import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon"
 import {sort as sortModel} from "./../model/sort";
 
 export function create(name, description){
-  var db = init.getDb();
+  var db = getDb();
   db.run("Begin");
   folder.add(name, description);
   var folderId = db.exec("select last_insert_rowid();")[0].values[0][0];
@@ -22,7 +22,7 @@ export function create(name, description){
 }
 
 export function sort(folderId, toInsertTo){
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
@@ -35,14 +35,14 @@ export function sort(folderId, toInsertTo){
 }
 
 export function list(){
-  var db = init.getDb();
+  var db = getDb();
   var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
   var sql = folder.joinAllSort(sortKey, { }).toString();
   return db.exec(sql).map(BaseModel.MapExecResult)[0];
 }
 
 export function deleteFolder(folderId, shouldForce) {
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var tasksInFolders = taskfolder.getAllBy({where: ["folderid", folderId]}
@@ -68,7 +68,7 @@ export function deleteFolder(folderId, shouldForce) {
 }
 
 export function listTasks(folderId, allOrNotDone) {
-  var db =  init.getDb();
+  var db =  getDb();
   var sortKey = sortModel.getSortKeys("task", folderId)[0];
   var whereObj = getAllOrNotDone(allOrNotDone);
   var sql = task.joinAllSort(sortKey, whereObj).toString();
@@ -76,7 +76,7 @@ export function listTasks(folderId, allOrNotDone) {
 }
 
 export function sortTask(taskId, toInsertTo){
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var folderId = taskfolder.getAllBy({where: ["taskid", taskId]}
@@ -95,7 +95,7 @@ export function moveTask(taskId, newFolderId, shouldForce) {
   newFolderId = parseInt(newFolderId);
   newFolderId = isNaN(newFolderId) ? 0 : newFolderId;
 
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var affectectedTask:any

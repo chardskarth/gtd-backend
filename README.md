@@ -9,8 +9,7 @@ Alhough creating an almost *todo list like* application seems like a fairly easy
 # installation
 ```bash
 # prerequisites: disregard if you have installed typescript and typings
-npm install typescript --global
-npm install typings --global
+npm install typescript typings --global
 
 #
 git clone https://github.com/chardskarth/gtd-backend.git && cd git-backend
@@ -26,7 +25,7 @@ The heart of GTD would fall down to 4 things: *task*, *context*, *folder* and *a
 `gtd config <sub_cmd>`
 |sub_cmd|description|
 |---|---|
-|init|create a database
+|init|create a database|
 ## task
 `gtd task <sub_cmd>`
 

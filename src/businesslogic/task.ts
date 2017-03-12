@@ -1,4 +1,4 @@
-import * as init from "./../model/init";
+import {getDb} from "./../helpers/ModelCommon";
 import {BaseModel} from "./../model/baseModel";
 import {agenda} from "./../model/agenda";
 import {context} from "./../model/context";
@@ -12,7 +12,7 @@ import {taskfolder} from "./../model/taskfolder";
 import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
 
 export function create(name, description, folderId, contextId, agendaId){
-  var db = init.getDb();
+  var db = getDb();
   db.run("Begin");
   folder.shouldExistOrUndefined(folderId);
   context.shouldExistOrUndefined(contextId);
@@ -33,7 +33,7 @@ export function create(name, description, folderId, contextId, agendaId){
 }
 
 export function sort(taskId, toInsertTo){
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
@@ -46,7 +46,7 @@ export function sort(taskId, toInsertTo){
 }
 
 export function list(){
-  var db = init.getDb();
+  var db = getDb();
   var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
   var sql = task.joinAllSort(sortKey, {
   }).toString();
@@ -56,7 +56,7 @@ export function list(){
 
 
 export function listByParent(parentTaskId, allOrNotDone){
-  var db = init.getDb();
+  var db = getDb();
   var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];
   var whereObj = getAllOrNotDone(allOrNotDone);
   var sql = task.joinAllSort(sortKey, whereObj).toString();
@@ -64,7 +64,7 @@ export function listByParent(parentTaskId, allOrNotDone){
 }
 
 export function sortByParent(taskId, toInsertTo){
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var parentTaskId = task.getById(taskId, task.getArrayFields("*")).parenttask;
@@ -85,7 +85,7 @@ export function setParentTask(taskId, parentTaskId, shouldForce) {
     throw Error("taskId and parentTaskId cannot be equal");
   }
 
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var taskFolderEntry = taskfolder.getAllBy({where: ["taskid", taskId]}, taskfolder.getArrayFields("*"));
@@ -115,7 +115,7 @@ export function setParentTask(taskId, parentTaskId, shouldForce) {
 
 export function markDone(taskId) {
   taskId = parseInt(taskId);
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var tableName = "task";
@@ -129,7 +129,7 @@ export function markDone(taskId) {
 
 export function unmarkDone(taskId) {
   taskId = parseInt(taskId);
-  var db = init.getDb();
+  var db = getDb();
   try{
     db.run("Begin");
     var tableName = "task";

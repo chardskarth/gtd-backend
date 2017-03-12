@@ -1,5 +1,6 @@
-import {BaseModel, SQLBuilder} from "./baseModel"
-import {sort} from "./sort"
+import {BaseModel, SQLBuilder} from "./baseModel";
+import {DBNames} from "./../helpers/ModelCommon";
+
 
 class Context extends BaseModel{
   static dbName: string = "context";
@@ -18,14 +19,15 @@ class Context extends BaseModel{
   }
   joinAllSort(key, whereObj){
     var contextFields = [
+      `context.id as id`,
       `context.name as name`,
       `context.description as description`,
       ];
     var res = SQLBuilder.select(contextFields)
-      .from(sort.dbName)
+      .from(DBNames.sort)
       .where("key", key).andWhere("tablename", context.dbName)
       .orderBy("ordervalue")
-      .innerJoin(this.dbName, `${sort.dbName}.tableid`, `${context.dbName}.id`);
+      .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${context.dbName}.id`);
     return BaseModel.BuildWhere(whereObj, res);
   }
 }

@@ -1,5 +1,5 @@
 import * as contextpage from "./../businesslogic/context";
-import {getDb, saveDb} from "./../model/init";
+import {getDb, saveDb} from "./../helpers/ModelCommon";;
 import CmdlnCreator  from "./../helpers/CmdlnCommandCreator";
 
 var util = require('util');

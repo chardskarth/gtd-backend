@@ -1,6 +1,6 @@
 import * as _knex from "knex";
 import * as SQL from "sql.js";
-import * as init from "./init";
+import {getDb} from "./../helpers/ModelCommon";
 
 var knex = _knex({
   client: 'sqlite3',
@@ -42,7 +42,7 @@ abstract class BaseModel{
   }
 
   get db(){
-    return init.getDb();
+    return getDb();
   }
   abstract createTable(db: SQL.Database);
 
