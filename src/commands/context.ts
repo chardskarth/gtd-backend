@@ -50,7 +50,7 @@ command.create("list-task", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("list tasks: contextId, allOrNotDone")
-  .aliases(["lt"]);
+  .aliases(["list-t"]);
 
 command.create("sort-task", function(subcmd, opts, args, cb) {
     var db = getDb();
@@ -60,7 +60,7 @@ command.create("sort-task", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("sort task: taskId, allOrNotDone")
-  .aliases(["st"]);
+  .aliases(["sort-t"]);
 
 command.create("move-task", function(subcmd, opts, args, cb) {
     var db = getDb();
@@ -70,6 +70,6 @@ command.create("move-task", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("move task: taskId, newContextId")
-  .aliases(["mt"]);
+  .aliases(["move-t"]);
 
 export default ContextPage;

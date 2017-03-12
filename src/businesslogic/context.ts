@@ -86,7 +86,7 @@ export function moveTask(taskId, newContextId) {
   } 
 }
 
-export function setEvery() {
+export function setEvery(contextId, everyStatement) {
 }
 
 export function reset() {
@@ -95,5 +95,5 @@ export function reset() {
 export function set(contextId, until){
 }
 
-export function unset() {
+export function unset(contextId) {
 }

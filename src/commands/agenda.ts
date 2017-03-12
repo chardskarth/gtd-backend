@@ -42,7 +42,7 @@ command.create("list", function(subcmd, opts, args, cb) {
   })
   .help("list the agendas")
 
-command.create("listtask", function(subcmd, opts, args, cb) {
+command.create("list-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = agendapage.listTasks.apply(agendapage, args);
     console.log(res);
@@ -51,9 +51,9 @@ command.create("listtask", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("list tasks: agendaId, allOrNotDone")
-  .aliases(["lt"]);
+  .aliases(["list-t"]);
 
-command.create("sorttask", function(subcmd, opts, args, cb) {
+command.create("sort-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = agendapage.sortTask.apply(agendapage, args);
     console.log(res);
@@ -62,9 +62,9 @@ command.create("sorttask", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("sort the task: taskId, toInsertTo")
-  .aliases(["st"]);
+  .aliases(["sort-t"]);
 
-command.create("movetask", function(subcmd, opts, args, cb) {
+command.create("move-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = agendapage.moveTask.apply(agendapage, args);
     console.log(res);
@@ -73,6 +73,6 @@ command.create("movetask", function(subcmd, opts, args, cb) {
     cb();
   })
   .help("move the task: taskId, newAgendaId")
-  .aliases(["mt"]);
+  .aliases(["move-t"]);
 
 export default Agendapage;
