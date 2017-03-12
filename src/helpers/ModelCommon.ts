@@ -90,7 +90,6 @@ var knownFields = [ "taskfolder.taskid"
 , "agenda.id" ]
 var ProxyFieldNames = new Proxy(FieldNames, {
   get: function(target, property, receiver){
-    console.log(receiver);
     var found = knownFields.find(x => x === property);
     if(found) {
       return found; 
