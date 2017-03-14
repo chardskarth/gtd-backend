@@ -1,12 +1,16 @@
 import * as Lexer from "lex";
 import {pick} from "underscore";
 import StateMachine = require("javascript-state-machine");
+import recur = require('date-recur')
 
 export function parse(input) {
   var stateMachine = Object.create({
     initial(i) {
       this._initial = i;
       return this;
+    }
+    , addToContext(cb){
+      cb.call(this);
     }
     , useDefaultSpace(){
       this._defaultSpaceRegex = /\s+/i;
@@ -64,6 +68,9 @@ export function parse(input) {
   });
   var {fs, lexer} = stateMachine.initial("none")
     .useDefaultSpace()
+    .addToContext(function(){ 
+      this._recur = recur();
+    })
 // go to "every" state, only when from state "none". input should be the regex
     .addEvent("every", "none", /every/i)
     .addEvent("dayset", "every", /day/i)
@@ -85,6 +92,10 @@ export function parse(input) {
 
   lexer.input = input;
   lexer.lex();
+
+  return { isToday: function(){
+
+  } };
 }
 
 // parse("every day");

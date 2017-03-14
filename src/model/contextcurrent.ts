@@ -1,7 +1,7 @@
 import {BaseModel, SQLBuilder} from "./baseModel"
 import {DBNames} from "./../helpers/ModelCommon";
 
-const IsSetType = {
+export const IsSetType = {
   manual:"manual"
   , every: "every"
 }
@@ -31,6 +31,10 @@ class ContextCurrent extends BaseModel{
   }
   updateIsSetByContextId(contextId, isSet) {
     var sql = SQLBuilder(this.dbName).update("isset", isSet).where("contextid", contextId).toString();
+    this.db.run(sql);
+  }
+  updateUntil(contextId, until) {
+    var sql = SQLBuilder(this.dbName).update("issetuntil", until).where("contextid", contextId).toString();
     this.db.run(sql);
   }
 }

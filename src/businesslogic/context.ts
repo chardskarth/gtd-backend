@@ -2,11 +2,11 @@ import {BaseModel} from "./../model/baseModel";
 import {task} from "./../model/task";
 import {context} from "./../model/context";
 import {taskcontext} from "./../model/taskcontext";
-import {contextcurrent} from "./../model/contextcurrent";
+import {contextcurrent, IsSetType} from "./../model/contextcurrent";
 import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
 import {getDb} from "./../helpers/ModelCommon";
 import {sort as sortModel} from "./../model/sort";
-import {parse} from "./../helpers/RepeatParser";
+import {parse as RepeatParser} from "./../helpers/RepeatParser";
 
 export function create(name, description){
   var db = getDb();
@@ -93,6 +93,7 @@ export function setEvery(contextId, everyStatement) {
   var db = getDb();
   try{
     db.run("Begin");
+    RepeatParser(everyStatement);
     contextcurrent.setEvery(contextId, everyStatement);
     db.run("End");
   } catch(err){
@@ -107,20 +108,49 @@ export function reset() {
     db.run("Begin");
     contextcurrent.removeIsSetInAll();
     var contextsWithEvery = contextcurrent.getAllBy({}, contextcurrent.getArrayFields("*"));
-
+    contextsWithEvery.filter(function(contextCurrent) { 
+      return RepeatParser(contextCurrent.every).isToday();
+    }).forEach(function(contextsPassed) {
+      contextcurrent.updateIsSetByContextId(contextsPassed.contextid, IsSetType.every);
+    });
     db.run("End");
   } catch(err){
     db.run("Rollback");
     throw err;
-  } 
+  }
 }
 
-export function currentContext() {
-  
+export function currentContexts() {
+  var db = getDb();
+  var activeContexts = contextcurrent.getAllBy({
+    where: ["isset", IsSetType.every]
+    , orWhere: ["isset", IsSetType.manual]
+  }, "*");
+  return activeContexts;
 }
 
 export function set(contextId, until){
+  var db = getDb();
+  try{
+    db.run("Begin");
+    contextcurrent.updateIsSetByContextId(contextId, IsSetType.manual);
+    until && contextcurrent.updateUntil(contextId, until);
+    db.run("End");
+  } catch(err){
+    db.run("Rollback");
+    throw err;
+  }
 }
 
 export function unset(contextId) {
+  var db = getDb();
+  try{
+    db.run("Begin");
+    contextcurrent.updateIsSetByContextId(contextId, null);
+    contextcurrent.updateUntil(contextId, null);
+    db.run("End");
+  } catch(err){
+    db.run("Rollback");
+    throw err;
+  }
 }
