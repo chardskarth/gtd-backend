@@ -31,6 +31,8 @@ First, lets create the database.
 |---|---|
 |init|create a database|
 
+----
+
 The heart of GTD would fall down to 4 things: task, context, folder and agenda.
 
 ## task
