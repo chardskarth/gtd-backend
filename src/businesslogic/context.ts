@@ -2,9 +2,11 @@ import {BaseModel} from "./../model/baseModel";
 import {task} from "./../model/task";
 import {context} from "./../model/context";
 import {taskcontext} from "./../model/taskcontext";
+import {contextcurrent} from "./../model/contextcurrent";
 import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
 import {getDb} from "./../helpers/ModelCommon";
 import {sort as sortModel} from "./../model/sort";
+import {parse} from "./../helpers/RepeatParser";
 
 export function create(name, description){
   var db = getDb();
@@ -87,9 +89,34 @@ export function moveTask(taskId, newContextId) {
 }
 
 export function setEvery(contextId, everyStatement) {
+  contextId = parseInt(contextId);
+  var db = getDb();
+  try{
+    db.run("Begin");
+    contextcurrent.setEvery(contextId, everyStatement);
+    db.run("End");
+  } catch(err){
+    db.run("Rollback");
+    throw err;
+  } 
 }
 
 export function reset() {
+  var db = getDb();
+  try{
+    db.run("Begin");
+    contextcurrent.removeIsSetInAll();
+    var contextsWithEvery = contextcurrent.getAllBy({}, contextcurrent.getArrayFields("*"));
+
+    db.run("End");
+  } catch(err){
+    db.run("Rollback");
+    throw err;
+  } 
+}
+
+export function currentContext() {
+  
 }
 
 export function set(contextId, until){

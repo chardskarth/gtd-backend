@@ -18,6 +18,7 @@ export function createDb(){
   var {taskcontext} = require("./../model/taskcontext");
   var {taskfolder} = require("./../model/taskfolder");
   var {sort} = require("./../model/sort");
+  var {contextcurrent} = require("./../model/contextcurrent");
   
   //reading file from diskx`
   try{
@@ -41,6 +42,7 @@ export function createDb(){
     taskagenda.createTable(db);
     taskcontext.createTable(db);
     taskfolder.createTable(db);
+    contextcurrent.createTable(db);
   });
   M.execute();
   saveDb();
@@ -76,6 +78,7 @@ export var DBNames = {
   , taskcontext: "taskcontext"
   , agenda: "agenda"
   , taskagenda: "taskagenda"
+  , contextcurrent: "contextcurrent"
 }
 
 var FieldNames = {}

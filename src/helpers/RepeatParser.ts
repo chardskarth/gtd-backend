@@ -77,7 +77,10 @@ export function parse(input) {
       , "monthdaylastdayset"], /at/i)
     .addEvent("timeset", ["timesetting", "dayset", "weekdayset", "monthdayelaboratedset"
       , "monthdaylastdayset"], /([01]?[0-9]):([01-5][0-9])(am|pm)/i)
-    .finalStates("dayset", "weekdayset", "monthdayelaboratedset", "monthdaylastdayset", "timeset")
+    .addEvent("timeendsetting", "timeset", /until/i)
+    .addEvent("timeendset", "timeendsetting", /([01]?[0-9]):([01-5][0-9])(am|pm)/i)
+    .finalStates("dayset", "weekdayset", "monthdayelaboratedset", "monthdaylastdayset"
+      , "timeset", "timeendset")
   .create();
 
   lexer.input = input;
