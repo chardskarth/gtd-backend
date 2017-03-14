@@ -4,7 +4,7 @@
  Read on [here](https://hamberg.no/gtd/#what-is-gtd) to know more!
 
 # synopsis
-Alhough creating an almost *todo list like* application seems like a fairly easy job, applying a new productivity framework effectively would require a seamless, easy-to-use application with a full proof ui/ux . And doing the front-end and back-end design at the same time wouldn't be the easier way to go. So cheers to `cli`'s!
+Alhough creating a *todo list like* application seems like an easy programming task, applying a new productivity framework effectively would require a seamless, easy-to-use application with a full proof ui/ux . And starting with its back-end functionality is the best way to go. So cheers to `cli`'s!
 
 # installation
 ```bash
@@ -15,11 +15,13 @@ npm install typescript typings --global
 git clone https://github.com/chardskarth/gtd-backend.git && cd git-backend
 npm install && typings install
 tsc # build the typescripts
+# yass!
+# gtd config init <-- would create the database
 ```
 then you are good to go!
 
 # usage
-The heart of GTD would fall down to 4 things: *task*, *context*, *folder* and *agenda*.
+First, lets create the database.
 
 ## config
 
@@ -28,8 +30,35 @@ The heart of GTD would fall down to 4 things: *task*, *context*, *folder* and *a
 |sub_cmd|description|
 |---|---|
 |init|create a database|
+
+The heart of GTD would fall down to 4 things: task, context, folder and agenda.
+
 ## task
 `gtd task <sub_cmd>`
+
+The parameter `toInsertTo` specifies the index to which the task should be inserted to.
+`gtd task list`
+```
+{_id: 1, name: task3 ...}
+{_id: 2, name: task2 ...}
+{_id: 3, name: task1 ...}
+```
+and after an execution of 
+`gtd task sort 3 1 & gtd task list`
+would render
+```
+{_id: 3, name: task1 ...}
+{_id: 1, name: task3 ...}
+{_id: 2, name: task2 ...}
+```
+and then
+`gtd task sort 2 2 & gtd task list`
+would output
+```
+{_id: 3, name: task1 ...}
+{_id: 2, name: task2 ...}
+{_id: 1, name: task3 ...}
+```
 
 The parameter `allOrNotDone` are allowed 3 values: 
 * `undefined` - returns all tasks.
@@ -84,8 +113,8 @@ contexts are one of the best and helpful realization about tasks.
 |list-task (list-t)|list task by context. |`contextId`, `allOrNotDone`|
 |sort-task (sort-t)|sorts tasks by context|`taskId`, `toInsertTo` |
 |move-task (move-t)|move task to a context. specify a `falsy` value to remove it from the context.|`taskId`, `newContextId`|
-|---| **COMING SOON** |----|
 |set-every|sets automatic setting of a context|`contextId`, `everyStatement`|
 |reset|removes manually set contexts and sets the automated ones||
+|current|gets the current active contexts||
 |set|manually set a context|`contextId`, `untilTime`|
 |unset|unset a manually set context||
