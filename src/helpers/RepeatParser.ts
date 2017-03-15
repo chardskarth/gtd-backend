@@ -1,77 +1,85 @@
 import * as Lexer from "lex";
 import {pick} from "underscore";
-import StateMachine = require("javascript-state-machine");
+import {StateMachine} from "javascript-state-machine";
 import recur = require('date-recur')
 
-export function parse(input) {
-  var stateMachine = Object.create({
-    initial(i) {
-      this._initial = i;
-      return this;
-    }
-    , addToContext(cb){
-      cb.call(this);
-    }
-    , useDefaultSpace(){
-      this._defaultSpaceRegex = /\s+/i;
-      this._isUsingDefaultSpace = true;
-      return this;
-    }
-    , addEvent(name: String, from: String  & String[], regex: RegExp, to?: String) {
-      to = to || name;
+type LexicalStateCB = (this: LexicalStateMachine, token, fromState, toState) => any;
+interface LexicalState{
+  name: string
+  , from: string | string[]
+  , to: string
+  , regex: RegExp
+  , cb?: LexicalStateCB
+}
 
-      this._events = this._events || [];
-      this._events.push({name, from, to, regex});
-      return this;
-    }
-    , finalStates(...states) {
-      this._finalStates = states;
-      return this;
-    }
-    , create() {
-      var create = this._create = {};
-      var initial = this._initial;
-      var events = this._events;
-      var self = this;
-      initial && (create["initial"] = initial);
-      create["events"] = this._events.map(x => pick(x, 'name', 'from', 'to'));
-      var fs = (this._fs = StateMachine.create(create));
+interface StateMachineConfig{
+  initial: string
+  events: any[]
+}
 
-      var lastToken; //for debugging
-      var lexer = this._lexer = new Lexer(function (token) {
+class LexicalStateMachine{
+  _defaultSpaceRegex = /\s+/i;
+  _isUsingDefaultSpace = false;
+  _states: LexicalState[] = [];
+  _finalStates: string[] = [];
+  _stateMachineConfig: StateMachineConfig = {} as any;
+  _stateMachine: StateMachine;
+  _lexer;
+  _lastToken: string
+  constructor(public initialStateName) { }
+  useDefaultSpace() {
+    this._isUsingDefaultSpace = true;
+  }
+  addEvent(name: string, from: string | string[], regex: RegExp, cb?: LexicalStateCB, to?: string){
+    to = to || name;
+    var toAdd = {name, from, to, regex, cb};
+    this._states.push(toAdd);
+    return this;
+  }
+  finalStates(...states) {
+    this._finalStates = states;
+  }
+  create() {
+    var self = this;
 
-        //if space is enabled, do nothing
-        if(self._isUsingDefaultSpace && self._defaultSpaceRegex.test(token)){}
-        else {
-          throw new Error(`Unexpected "${token}" near "${lastToken}"`);
+    //create finite machine
+    var stateMachineConfig = this._stateMachineConfig;
+    var initial = this.initialStateName;
+    initial && (stateMachineConfig.initial = initial);
+    stateMachineConfig.events = this._states.map(x => pick(x, 'name', 'from', 'to'));
+    this._stateMachine = StateMachine.create(stateMachineConfig);
 
-        }
-      });
-      this._events.map(x => pick(x, 'name', 'regex'))
-        .forEach(function (evt) {
-          lexer.addRule(evt.regex, function(token){
-            lastToken = token;
-            fs[evt.name]();
-          });
-        });
-      
-      var originalLex = lexer.lex;
-      lexer.lex = function(){
-        var retVal = originalLex.apply(lexer, arguments);
-        console.log(fs.current);
-        var isInFinalStates = self._finalStates.find(x => x == fs.current);
-        if(!isInFinalStates) throw Error("Not in final state!");
-        return retVal;
+    //create lexer
+    var lexer = this._lexer = new Lexer(function (token) {
+      if(self._isUsingDefaultSpace && self._defaultSpaceRegex.test(token)){}
+      else {
+        throw new Error(`Unexpected "${token}" near "${self._lastToken}"`);
       }
-      return {fs, lexer};
+    });
+    this._states.map(x => pick(x, 'name', 'regex', 'cb'))
+      .forEach(function (evt: LexicalState) {
+        lexer.addRule(evt.regex, function(token){
+          // console.log("hadsfasdf");
+          // console.log(arguments);
+          self._lastToken = token;
+          self._stateMachine[evt.name]();
+          evt.cb && evt.cb.call(self, [token].concat(arguments));
+        });
+      });
+
+    return {
+      stateMachine: this._stateMachine
+      , lexer
     }
-  });
-  var {fs, lexer} = stateMachine.initial("none")
-    .useDefaultSpace()
-    .addToContext(function(){ 
-      this._recur = recur();
-    })
-// go to "every" state, only when from state "none". input should be the regex
+  }
+}
+
+export function parse(input) {
+  var lexicalStateMachine = new LexicalStateMachine("none");
+  var recurStack = [] as any;
+
+  lexicalStateMachine.useDefaultSpace();
+  lexicalStateMachine
     .addEvent("every", "none", /every/i)
     .addEvent("dayset", "every", /day/i)
     .addEvent("weekdayset", "every", /((monday)|(tuesday)|(wednesday)|(thursday)|(friday)|(sunday)|(saturday))/i)
@@ -88,16 +96,18 @@ export function parse(input) {
     .addEvent("timeendset", "timeendsetting", /([01]?[0-9]):([01-5][0-9])(am|pm)/i)
     .finalStates("dayset", "weekdayset", "monthdayelaboratedset", "monthdaylastdayset"
       , "timeset", "timeendset")
-  .create();
 
+  var {stateMachine, lexer} = lexicalStateMachine.create();
   lexer.input = input;
   lexer.lex();
 
-  return { isToday: function(){
-
+  return { 
+    isToday: function(){
   } };
 }
 
-// parse("every day");
-// parse("every month on the 15th");
-// parse("every monday at 12:00pm");
+parse("every day");
+parse("every tuesday");
+parse("every wednesday and friday");
+parse("every month on the 15th");
+parse("every monday at 12:00pm");
