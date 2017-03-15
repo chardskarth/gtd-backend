@@ -1,5 +1,6 @@
 import * as Lexer from "lex";
 import {pick} from "underscore";
+import moment = require("moment");
 import {StateMachine} from "javascript-state-machine";
 import recur = require('date-recur')
 
@@ -15,6 +16,7 @@ interface LexicalState{
 interface StateMachineConfig{
   initial: string
   events: any[]
+  callbacks
 }
 
 class LexicalStateMachine{
@@ -47,6 +49,13 @@ class LexicalStateMachine{
     var initial = this.initialStateName;
     initial && (stateMachineConfig.initial = initial);
     stateMachineConfig.events = this._states.map(x => pick(x, 'name', 'from', 'to'));
+    stateMachineConfig.callbacks = this._states.reduce(function(prev, curr) {
+      var prevCb = curr.cb || function() {};
+      prev[`onenter${curr.name}`] = function(evt, from, to, token) {
+        prevCb.call(self, token, from, to);
+      }
+      return prev;
+    }, {});
     this._stateMachine = StateMachine.create(stateMachineConfig);
 
     //create lexer
@@ -59,11 +68,8 @@ class LexicalStateMachine{
     this._states.map(x => pick(x, 'name', 'regex', 'cb'))
       .forEach(function (evt: LexicalState) {
         lexer.addRule(evt.regex, function(token){
-          // console.log("hadsfasdf");
-          // console.log(arguments);
           self._lastToken = token;
-          self._stateMachine[evt.name]();
-          evt.cb && evt.cb.call(self, [token].concat(arguments));
+          self._stateMachine[evt.name](token);
         });
       });
 
@@ -74,26 +80,57 @@ class LexicalStateMachine{
   }
 }
 
+
+
 export function parse(input) {
   var lexicalStateMachine = new LexicalStateMachine("none");
   var recurStack = [] as any;
+  var _recur = recur(moment().format("YYYY-MM-DD"));
+  var timeOfDay, endTimeOfDay;
 
   lexicalStateMachine.useDefaultSpace();
   lexicalStateMachine
     .addEvent("every", "none", /every/i)
-    .addEvent("dayset", "every", /day/i)
-    .addEvent("weekdayset", "every", /((monday)|(tuesday)|(wednesday)|(thursday)|(friday)|(sunday)|(saturday))/i)
-    .addEvent("weekdayadding", "weekdayset", /(and)|(,)/i)
-    .addEvent("monthsetting", "every", /month/i)
+    .addEvent("dayset", "every", /day/i, function(token) {
+      // recurStack.push("setDailyInterval");
+      // recurStack.push(1);
+      _recur.setDailyInterval(1);
+    })
+    .addEvent("weekdayset", "every", /((monday)|(tuesday)|(wednesday)|(thursday)|(friday)|(sunday)|(saturday))/i, function(token) {
+      // recurStack.push("setDaysOfWeek");
+      // recurStack.push(token);
+      var dayNum = moment(token, "dddd", true).day();
+      _recur.setDaysOfWeek([dayNum]);
+    })
+    .addEvent("monthsetting", "every", /month/i, function() {
+      // recurStack.push("setMonthlyInterval");
+      // recurStack.push(1);
+      _recur.setMonthlyInterval(1);
+    })
     .addEvent("monthdayelaborating", ["monthsetting", "monthdayelaborating"], /(on)|(the)/i)
-    .addEvent("monthdayelaboratedset", "monthdayelaborating", /([123]?[1-9])((st)|(th))/i)
-    .addEvent("monthdaylastdayset", ["monthdayelaborating"], /lastday/i)
+    .addEvent("monthdayelaboratedset", "monthdayelaborating", /([123]?[1-9])((st)|(th))/i, function(token) {
+      var num = parseInt(token.replace(/(st)|(th)/i, ""));
+      // console.log(typeof num);
+      // console.log(num);
+      // recurStack.push("setDaysOfMonth");
+      // recurStack.push(num);
+      _recur.setDaysOfMonth([num]);
+    })
+    // .addEvent("monthdaylastdayset", ["monthdayelaborating"], /lastday/i)
     .addEvent("timesetting", ["dayset", "weekdayset", "monthdayelaboratedset"
       , "monthdaylastdayset"], /at/i)
     .addEvent("timeset", ["timesetting", "dayset", "weekdayset", "monthdayelaboratedset"
-      , "monthdaylastdayset"], /([01]?[0-9]):([01-5][0-9])(am|pm)/i)
+      /* , "monthdaylastdayset" */], /([01]?[0-9]):([01-5][0-9])(am|pm)/i, function(token) {
+        // recurStack.push("setTimeOfDay");
+        // recurStack.push(token);
+        timeOfDay = token;
+      })
     .addEvent("timeendsetting", "timeset", /until/i)
-    .addEvent("timeendset", "timeendsetting", /([01]?[0-9]):([01-5][0-9])(am|pm)/i)
+    .addEvent("timeendset", "timeendsetting", /([01]?[0-9]):([01-5][0-9])(am|pm)/i, function(token) {
+      // recurStack.push("setEndTimeOfDay");
+      // recurStack.push(token);
+      endTimeOfDay = token;
+    })
     .finalStates("dayset", "weekdayset", "monthdayelaboratedset", "monthdaylastdayset"
       , "timeset", "timeendset")
 
@@ -103,11 +140,11 @@ export function parse(input) {
 
   return { 
     isToday: function(){
+      return _recur.matches(moment().format("YYYY-MM-DD"));
   } };
 }
 
-parse("every day");
-parse("every tuesday");
-parse("every wednesday and friday");
-parse("every month on the 15th");
-parse("every monday at 12:00pm");
+console.log(parse("every day").isToday());
+console.log(parse("every Thursday").isToday());
+console.log(parse("every month on the 16th").isToday());
+console.log(parse("every monday at 12:00pm").isToday());

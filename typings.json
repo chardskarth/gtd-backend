@@ -4,6 +4,7 @@
     "sql.js": "registry:dt/sql.js#0.0.0+20160915014424"
   },
   "globalDependencies": {
+    "moment": "registry:dt/moment#2.11.1+20161010105546",
     "node": "registry:dt/node#7.0.0+20170204020307",
     "state-machine": "registry:dt/state-machine#2.3.5+20160915014424"
   }
