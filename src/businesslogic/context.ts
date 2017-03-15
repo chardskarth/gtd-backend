@@ -102,7 +102,7 @@ export function setEvery(contextId, everyStatement) {
   } 
 }
 
-export function reset() {
+export function reset(autoOrManual) {
   var db = getDb();
   try{
     db.run("Begin");
@@ -130,6 +130,7 @@ export function currentContexts() {
 }
 
 export function set(contextId, until){
+  contextId = parseInt(contextId);
   var db = getDb();
   try{
     db.run("Begin");
@@ -143,6 +144,7 @@ export function set(contextId, until){
 }
 
 export function unset(contextId) {
+  contextId = parseInt(contextId);
   var db = getDb();
   try{
     db.run("Begin");

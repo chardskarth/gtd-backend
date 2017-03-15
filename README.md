@@ -107,6 +107,11 @@ contexts are one of the best and helpful realization about tasks.
 
 `gtd context <sub_cmd>`
 
+The parameter `autoOrManual` are allowed 3 values: 
+* `undefined` - resets all contexts, both automatically set and manually
+* `truthy` value - resets only the automatically set context
+* `falsy` value - resets only the manuallySetContext
+
 |sub_cmd|description|arguments|
 |---|---|---|
 |create|create an context| `name`, `desc`|
@@ -116,7 +121,7 @@ contexts are one of the best and helpful realization about tasks.
 |sort-task (sort-t)|sorts tasks by context|`taskId`, `toInsertTo` |
 |move-task (move-t)|move task to a context. specify a `falsy` value to remove it from the context.|`taskId`, `newContextId`|
 |set-every|sets automatic setting of a context|`contextId`, `everyStatement`|
-|reset|removes manually set contexts and sets the automated ones||
+|reset|removes manually set contexts and sets the automated ones|`autoOrManual`|
 |current|gets the current active contexts||
 |set|manually set a context|`contextId`, `untilTime`|
 |unset|unset a manually set context||
