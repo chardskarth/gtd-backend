@@ -112,6 +112,8 @@ The parameter `autoOrManual` are allowed 3 values:
 * `truthy` value - resets only the automatically set context
 * `falsy` value - resets only the manuallySetContext
 
+The parameter `untilTime` must be a valid time format: 
+
 |sub_cmd|description|arguments|
 |---|---|---|
 |create|create an context| `name`, `desc`|
@@ -123,5 +125,5 @@ The parameter `autoOrManual` are allowed 3 values:
 |set-every|sets automatic setting of a context|`contextId`, `everyStatement`|
 |reset|removes manually set contexts and sets the automated ones|`autoOrManual`|
 |current|gets the current active contexts||
-|set|manually set a context|`contextId`, `untilTime`|
+|set|manually set a context. |`contextId`, `untilTime?`|
 |unset|unset a manually set context||

@@ -5,8 +5,10 @@ import {taskcontext} from "./../model/taskcontext";
 import {contextcurrent, IsSetType} from "./../model/contextcurrent";
 import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
 import {getDb} from "./../helpers/ModelCommon";
+import {isTimeValid} from "./../helpers/Extension";
 import {sort as sortModel} from "./../model/sort";
-import {parse as RepeatParser} from "./../helpers/RepeatParser";
+import moment = require("moment");
+
 
 export function create(name, description){
   var db = getDb();
@@ -93,7 +95,6 @@ export function setEvery(contextId, everyStatement) {
   var db = getDb();
   try{
     db.run("Begin");
-    RepeatParser(everyStatement);
     contextcurrent.setEvery(contextId, everyStatement);
     db.run("End");
   } catch(err){
@@ -106,13 +107,15 @@ export function reset(autoOrManual) {
   var db = getDb();
   try{
     db.run("Begin");
-    contextcurrent.removeIsSetInAll();
-    var contextsWithEvery = contextcurrent.getAllBy({}, contextcurrent.getArrayFields("*"));
-    contextsWithEvery.filter(function(contextCurrent) { 
-      return RepeatParser(contextCurrent.every).isToday();
-    }).forEach(function(contextsPassed) {
-      contextcurrent.updateIsSetByContextId(contextsPassed.contextid, IsSetType.every);
-    });
+    contextcurrent.removeIsSetInAll(IsSetType.unset);
+    if(typeof autoOrManual === "undefined") {
+      contextcurrent.removeIsSetInAll();
+    } else if(autoOrManual) {
+      contextcurrent.removeIsSetInAll(IsSetType.auto);
+    } else {
+      contextcurrent.removeIsSetInAll(IsSetType.manual);
+    }
+    contextcurrent.automaticContextSet();
     db.run("End");
   } catch(err){
     db.run("Rollback");
@@ -122,20 +125,30 @@ export function reset(autoOrManual) {
 
 export function currentContexts() {
   var db = getDb();
-  var activeContexts = contextcurrent.getAllBy({
-    where: ["isset", IsSetType.every]
-    , orWhere: ["isset", IsSetType.manual]
-  }, "*");
+  var activeContexts;
+  try{
+    db.run("Begin");
+    contextcurrent.checkManualContextSet();
+    contextcurrent.automaticContextSet();
+    activeContexts = contextcurrent.currentContexts();
+    db.run("End");
+  } catch(err){
+    db.run("Rollback");
+    throw err;
+  }
   return activeContexts;
 }
 
 export function set(contextId, until){
   contextId = parseInt(contextId);
+  if(until && !isTimeValid(until)) {
+    throw Error("until is not a valid time format.");
+  }
   var db = getDb();
   try{
     db.run("Begin");
-    contextcurrent.updateIsSetByContextId(contextId, IsSetType.manual);
-    until && contextcurrent.updateUntil(contextId, until);
+    contextcurrent.upsertIsSetByContextId(contextId, IsSetType.manual);
+    until && contextcurrent.upsertUntil(contextId, until);
     db.run("End");
   } catch(err){
     db.run("Rollback");
@@ -148,8 +161,8 @@ export function unset(contextId) {
   var db = getDb();
   try{
     db.run("Begin");
-    contextcurrent.updateIsSetByContextId(contextId, null);
-    contextcurrent.updateUntil(contextId, null);
+    contextcurrent.upsertIsSetByContextId(contextId, IsSetType.unset);
+    contextcurrent.upsertUntil(contextId, null);
     db.run("End");
   } catch(err){
     db.run("Rollback");

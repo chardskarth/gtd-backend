@@ -72,4 +72,45 @@ command.create("move-task", function(subcmd, opts, args, cb) {
   .help("move task: taskId, newContextId")
   .aliases(["move-t"]);
 
+command.create("set-every", function(subcmd, opts, args, cb) {
+    var db = getDb();
+    var res = contextpage.setEvery.apply(contextpage, args);
+    console.log(res);
+    saveDb();
+    cb();
+  })
+  .help("sets automatic setting of a context");
+command.create("reset", function(subcmd, opts, args, cb) {
+    var db = getDb();
+    var res = contextpage.reset.apply(contextpage, args);
+    console.log(res);
+    saveDb();
+    cb();
+  })
+  .help("removes manually set contexts and sets the automated ones")
+command.create("current", function(subcmd, opts, args, cb) {
+    var db = getDb();
+    var res = contextpage.currentContexts.apply(contextpage, args);
+    console.log(res);
+    saveDb();
+    cb();
+  })
+  .help("gets the current active contexts");
+command.create("set", function(subcmd, opts, args, cb) {
+    var db = getDb();
+    var res = contextpage.set.apply(contextpage, args);
+    console.log(res);
+    saveDb();
+    cb();
+  })
+  .help("manually set a context");
+command.create("unset", function(subcmd, opts, args, cb) {
+    var db = getDb();
+    var res = contextpage.unset.apply(contextpage, args);
+    console.log(res);
+    saveDb();
+    cb();
+  })
+  .help("unset a manually set context");
+
 export default ContextPage;

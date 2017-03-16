@@ -62,7 +62,7 @@ class LexicalStateMachine{
     var lexer = this._lexer = new Lexer(function (token) {
       if(self._isUsingDefaultSpace && self._defaultSpaceRegex.test(token)){}
       else {
-        throw new Error(`Unexpected "${token}" near "${self._lastToken}"`);
+        throw new Error(`Unexpected "${token}" after "${self._lastToken}"`);
       }
     });
     this._states.map(x => pick(x, 'name', 'regex', 'cb'))
@@ -140,11 +140,12 @@ export function parse(input) {
 
   return { 
     isToday: function(){
-      return _recur.matches(moment().format("YYYY-MM-DD"));
+      var retVal = _recur.matches(moment().format("YYYY-MM-DD"));
+      return retVal;
   } };
 }
 
-console.log(parse("every day").isToday());
-console.log(parse("every Thursday").isToday());
-console.log(parse("every month on the 16th").isToday());
-console.log(parse("every monday at 12:00pm").isToday());
+// console.log(parse("every day").isToday());
+// console.log(parse("every Thursday").isToday());
+// console.log(parse("every month on the 16th").isToday());
+// console.log(parse("every monday at 12:00pm").isToday());
