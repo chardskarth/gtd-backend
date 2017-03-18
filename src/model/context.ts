@@ -5,15 +5,13 @@ import {DBNames} from "./../helpers/ModelCommon";
 class Context extends BaseModel{
   static dbName: string = "context";
   constructor(){
-    super(Context.dbName, ["name", "description", "activetime", "activeday"]);
+    super(Context.dbName, ["name", "description"]);
   }
   createTable(db){
     var q = SQLBuilder.schema.createTableIfNotExists(Context.dbName, function (table) {
       table.increments();
       table.string("name").notNullable();
       table.string("description").notNullable();
-      table.string("activetime");
-      table.string("activeday");
     });
     db.run(q.toString());
   }
