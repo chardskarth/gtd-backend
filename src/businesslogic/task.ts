@@ -9,7 +9,7 @@ import {foldercontext} from "./../model/foldercontext";
 import {taskagenda} from "./../model/taskagenda";
 import {taskcontext} from "./../model/taskcontext";
 import {taskfolder} from "./../model/taskfolder";
-import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
+import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers/BusinessLogicCommon";
 
 export function create(name, description, folderId, contextId, agendaId){
   var db = getDb();
@@ -30,19 +30,23 @@ export function create(name, description, folderId, contextId, agendaId){
   typeof contextId !== "undefined" && taskcontext.add(taskId, contextId);
   typeof agendaId !== "undefined" && taskagenda.add(taskId, agendaId);
   db.run("End");
+  return BusinessLogicResult.OK();
 }
 
 export function sort(taskId, toInsertTo){
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
     sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
-  } catch(err){
-    throw err;
-  } finally {
     db.run("End");
+    retVal = BusinessLogicResult.OK();
+  } catch(err){
+    db.run("Rollback");
+    retVal = BusinessLogicResult.Error(err);
   }
+  return retVal;
 }
 
 export function list(){
@@ -50,7 +54,8 @@ export function list(){
   var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
   var sql = task.joinAllSort(sortKey, {
   }).toString();
-  return db.exec(sql).map(BaseModel.MapExecResult)[0];
+  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
+  return BusinessLogicResult.OK(result);
 }
 
 
@@ -60,21 +65,25 @@ export function listByParent(parentTaskId, allOrNotDone){
   var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];
   var whereObj = getAllOrNotDone(allOrNotDone);
   var sql = task.joinAllSort(sortKey, whereObj).toString();
-  return db.exec(sql).map(BaseModel.MapExecResult)[0];
+  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
+  return BusinessLogicResult.OK(result);
 }
 
 export function sortByParent(taskId, toInsertTo){
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var parentTaskId = task.getById(taskId, task.getArrayFields("*")).parenttask;
     var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];
     sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function setParentTask(taskId, parentTaskId, shouldForce) {
@@ -86,6 +95,7 @@ export function setParentTask(taskId, parentTaskId, shouldForce) {
   }
 
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var taskFolderEntry = taskfolder.getAllBy({where: ["taskid", taskId]}, taskfolder.getArrayFields("*"));
@@ -106,37 +116,44 @@ export function setParentTask(taskId, parentTaskId, shouldForce) {
     }
     sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
-
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function markDone(taskId) {
   taskId = parseInt(taskId);
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var tableName = "task";
     task.updateDone(taskId, 1);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function unmarkDone(taskId) {
   taskId = parseInt(taskId);
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var tableName = "task";
     task.updateDone(taskId, 0);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }

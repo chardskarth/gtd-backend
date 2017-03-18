@@ -16,7 +16,9 @@ util.inherits(ContextPage, cmdln.Cmdln);
 var command = CmdlnCreator(ContextPage);
 command.create("create", function(subcmd, opts, args, cb) {
     var db = getDb();
-    contextpage.create.apply(contextpage, args);
+    var res = contextpage.create.apply(contextpage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -25,7 +27,9 @@ command.create("create", function(subcmd, opts, args, cb) {
 
 command.create("sort", function(subcmd, opts, args, cb) {
     var db = getDb();
-    contextpage.sort.apply(contextpage, args);
+    var res = contextpage.sort.apply(contextpage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })

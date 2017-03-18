@@ -16,7 +16,9 @@ util.inherits(Folderpage, cmdln.Cmdln);
 var command = CmdlnCreator(Folderpage);
 command.create("create", function(subcmd, opts, args, cb) {
     var db = getDb();
-    folderpage.create.apply(folderpage, args);
+    var res = folderpage.create.apply(folderpage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -25,7 +27,9 @@ command.create("create", function(subcmd, opts, args, cb) {
 
 command.create("sort", function(subcmd, opts, args, cb) {
     var db = getDb();
-    folderpage.sort.apply(folderpage, args);
+    var res = folderpage.sort.apply(folderpage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -56,6 +60,7 @@ command.create("list-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = folderpage.listTasks.apply(folderpage, args);
     console.log(res);
+
     saveDb();
     cb();
   })
@@ -66,6 +71,7 @@ command.create("sort-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = folderpage.sortTask.apply(folderpage, args);
     console.log(res);
+
     saveDb();
     cb();
   })
@@ -76,6 +82,7 @@ command.create("move-task", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = folderpage.moveTask.apply(folderpage, args);
     console.log(res);
+    
     saveDb();
     cb();
   })

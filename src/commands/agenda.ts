@@ -16,7 +16,9 @@ util.inherits(Agendapage, cmdln.Cmdln);
 var command = CmdlnCreator(Agendapage);
 command.create("create", function(subcmd, opts, args, cb) {
     var db = getDb();
-    agendapage.create.apply(agendapage, args);
+    var res = agendapage.create.apply(agendapage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -25,7 +27,9 @@ command.create("create", function(subcmd, opts, args, cb) {
 
 command.create("sort", function(subcmd, opts, args, cb) {
     var db = getDb();
-    agendapage.sort.apply(agendapage, args);
+    var res = agendapage.sort.apply(agendapage, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })

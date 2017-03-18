@@ -16,7 +16,9 @@ util.inherits(TaskList, cmdln.Cmdln);
 var command = CmdlnCreator(TaskList);
 command.create("create", function(subcmd, opts, args, cb) {
     var db = getDb();
-    tasklist.create.apply(tasklist, args);
+    var res = tasklist.create.apply(tasklist, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -25,7 +27,9 @@ command.create("create", function(subcmd, opts, args, cb) {
 
 command.create("sort", function(subcmd, opts, args, cb) {
     var db = getDb();
-    tasklist.sort.apply(tasklist, args);
+    var res = tasklist.sort.apply(tasklist, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -48,6 +52,7 @@ command.create("list-by-parent", function(subcmd, opts, args, cb) {
       ? undefined : Boolean(parseInt(opts.allOrNotDone));
     var res = tasklist.listByParent.apply(tasklist, args);
     console.log(res);
+
     saveDb();
     cb();
   })
@@ -57,6 +62,8 @@ command.create("list-by-parent", function(subcmd, opts, args, cb) {
 command.create("sort-by-parent", function(subcmd, opts, args, cb) {
     var db = getDb();
     var res = tasklist.sortByParent.apply(tasklist, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -68,6 +75,8 @@ command.create("set-parent", function(subcmd, opts, args, cb) {
     var db = getDb();
     //opts is 
     var res = tasklist.setParentTask.apply(tasklist, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -76,6 +85,8 @@ command.create("done", function(subcmd, opts, args, cb) {
     var db = getDb();
     //opts is 
     var res = tasklist.markDone.apply(tasklist, args);
+    console.log(res);
+    
     saveDb();
     cb();
   })
@@ -84,6 +95,8 @@ command.create("undone", function(subcmd, opts, args, cb) {
   var db = getDb();
   //opts is 
   var res = tasklist.unmarkDone.apply(tasklist, args);
+  console.log(res);
+  
   saveDb();
   cb();
 })

@@ -3,7 +3,7 @@ import {BaseModel} from "./../model/baseModel";
 import {task} from "./../model/task";
 import {folder} from "./../model/folder";
 import {taskfolder} from "./../model/taskfolder";
-import {allOrNotDone as getAllOrNotDone} from "./../helpers/BusinessLogicCommon";
+import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers/BusinessLogicCommon";
 import {sort as sortModel} from "./../model/sort";
 
 export function create(name, description){
@@ -19,30 +19,36 @@ export function create(name, description){
   });
 
   db.run("End");
+  return BusinessLogicResult.OK();
 }
 
 export function sort(folderId, toInsertTo){
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
     sortModel.updateSortOrder("folder", folderId, sortKey, toInsertTo);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
+    retVal = BusinessLogicResult.Error(err);
   }
+  return retVal;
 }
 
 export function list(){
   var db = getDb();
   var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
   var sql = folder.joinAllSort(sortKey, { }).toString();
-  return db.exec(sql).map(BaseModel.MapExecResult)[0];
+  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
+  return BusinessLogicResult.OK(result);
 }
 
 export function deleteFolder(folderId, shouldForce) {
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var tasksInFolders = taskfolder.getAllBy({where: ["folderid", folderId]}
@@ -61,10 +67,12 @@ export function deleteFolder(folderId, shouldForce) {
     });
     folder.deleteById(folderId);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
+    retVal = BusinessLogicResult.Error(err);
   }
+  return retVal;
 }
 
 export function listTasks(folderId, allOrNotDone) {
@@ -72,11 +80,13 @@ export function listTasks(folderId, allOrNotDone) {
   var sortKey = sortModel.getSortKeys("task", folderId)[0];
   var whereObj = getAllOrNotDone(allOrNotDone);
   var sql = task.joinAllSort(sortKey, whereObj).toString();
-  return db.exec(sql).map(BaseModel.MapExecResult)[0];
+  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
+  return BusinessLogicResult.OK(result);
 }
 
 export function sortTask(taskId, toInsertTo){
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var folderId = taskfolder.getAllBy({where: ["taskid", taskId]}
@@ -84,10 +94,12 @@ export function sortTask(taskId, toInsertTo){
     var sortKey = sortModel.getSortKeys("task", folderId)[0];
     sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function moveTask(taskId, newFolderId, shouldForce) {
@@ -96,6 +108,7 @@ export function moveTask(taskId, newFolderId, shouldForce) {
   newFolderId = isNaN(newFolderId) ? 0 : newFolderId;
 
   var db = getDb();
+  var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     var affectectedTask:any
@@ -125,8 +138,10 @@ export function moveTask(taskId, newFolderId, shouldForce) {
     var newSortKey = sortModel.getSortKeys(tableName, newFolderId)[0];
     sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey)
     db.run("End");
+    retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
-    throw err;
-  } 
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
