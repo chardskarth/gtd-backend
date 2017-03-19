@@ -58,8 +58,6 @@ export function list(){
   return BusinessLogicResult.OK(result);
 }
 
-
-
 export function listByParent(parentTaskId, allOrNotDone){
   var db = getDb();
   var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];

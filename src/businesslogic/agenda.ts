@@ -6,18 +6,24 @@ import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers
 import {getDb} from "./../helpers/ModelCommon";
 import {sort as sortModel} from "./../model/sort";
 
-export function create(name, description): BusinessLogicResult{
+export function create(name, description){
   var db = getDb();
-  db.run("Begin");
-  agenda.add(name, description);
-  var agendaId = db.exec("select last_insert_rowid();")[0].values[0][0];
-  // if there is a folder, there is a sort there, else, theres a sort here
-  sortModel.getSortKeys(agenda.dbName)
-    .forEach(function(sortKey) {
-      sortModel.add(sortKey, agenda.dbName, agendaId);
-  });
-  db.run("End");
-  return BusinessLogicResult.OK();
+  var retVal: BusinessLogicResult;
+  try {
+    db.run("Begin");
+    agenda.add(name, description);
+    var agendaId = db.exec("select last_insert_rowid();")[0].values[0][0];
+    // if there is a folder, there is a sort there, else, theres a sort here
+    sortModel.getSortKeys(agenda.dbName)
+      .forEach(function(sortKey) {
+        sortModel.add(sortKey, agenda.dbName, agendaId);
+    });
+    db.run("End");
+    retVal = BusinessLogicResult.OK();
+  } catch(err){
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function sort(agendaId, toInsertTo){
@@ -27,11 +33,10 @@ export function sort(agendaId, toInsertTo){
     db.run("Begin");
     var sortKey = sortModel.getSortKeys(agenda.dbName).reduce(x => x); //getfirst
     sortModel.updateSortOrder(agenda.dbName, agendaId, sortKey, toInsertTo);
-  } catch(err){
-    retVal = BusinessLogicResult.Error(err);
-  } finally {
     db.run("End");
     retVal = BusinessLogicResult.OK();
+  } catch(err){
+    retVal = BusinessLogicResult.Error(err);
   }
   return retVal;
 }
