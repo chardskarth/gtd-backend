@@ -119,19 +119,14 @@ export function setEvery(contextId, everyStatement) {
   return retVal;
 }
 
-export function reset(autoOrManual) {
+export function reset() {
   var db = getDb();
   var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
     contextcurrent.removeIsSetInAll(IsSetType.unset);
-    if(typeof autoOrManual === "undefined") {
-      contextcurrent.removeIsSetInAll();
-    } else if(autoOrManual) {
-      contextcurrent.removeIsSetInAll(IsSetType.auto);
-    } else {
-      contextcurrent.removeIsSetInAll(IsSetType.manual);
-    }
+    contextcurrent.removeIsSetInAll(IsSetType.manual);
+    contextcurrent.removeIsSetInAll();
     contextcurrent.automaticContextSet();
     db.run("End");
     retVal = BusinessLogicResult.OK();

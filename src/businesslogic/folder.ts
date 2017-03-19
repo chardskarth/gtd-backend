@@ -8,18 +8,24 @@ import {sort as sortModel} from "./../model/sort";
 
 export function create(name, description){
   var db = getDb();
-  db.run("Begin");
-  folder.add(name, description);
-  var folderId = db.exec("select last_insert_rowid();")[0].values[0][0];
-  
-  // if there is a folder, there is a sort there, else, theres a sort here
-  sortModel.getSortKeys("folder")
-    .forEach(function(sortKey) {
-      sortModel.add(sortKey, "folder", folderId);
-  });
-
-  db.run("End");
-  return BusinessLogicResult.OK();
+  var retVal;
+  try {
+    db.run("Begin");
+    folder.add(name, description);
+    var folderId = db.exec("select last_insert_rowid();")[0].values[0][0];
+    
+    // if there is a folder, there is a sort there, else, theres a sort here
+    sortModel.getSortKeys("folder")
+      .forEach(function(sortKey) {
+        sortModel.add(sortKey, "folder", folderId);
+    });
+    db.run("End");
+    retVal = BusinessLogicResult.OK();
+  } catch (err) {
+    db.run("Rollback");
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function sort(folderId, toInsertTo){
