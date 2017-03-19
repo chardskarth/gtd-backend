@@ -37,22 +37,18 @@ class ContextCurrent extends BaseModel{
     `).toString();
     this.db.run(sql);
   }
-  removeIsSetInAll(whereIsSet?) {
+  removeIsSetInAll() {
     //if has every, remove issetuntil
     var sql: any = SQLBuilder(this.dbName)
       .update("isset", null)
-      .update("issetuntil", null)
-      .whereRaw("every is not null or trim(every) <> \"\" ");
-    if(typeof whereIsSet !== "undefined") {
-      sql.andWhere("isset", whereIsSet)
-    }
+      .update("issetuntil", null);
     this.db.run(sql.toString());
   }
   upsertIsSetByContextId(contextId, isSet) {
     //generalize this upsert soon
     var sql = SQLBuilder.raw(`INSERT OR REPLACE INTO ${this.dbName} (contextid, isset, issetuntil, every) 
     VALUES (  ${contextId}
-              , "${isSet}"
+              , ${typeof isSet === "undefined" ? "null" : '"' + isSet + '"' }
               , (SELECT issetuntil FROM ${this.dbName} WHERE contextid = ${contextId})
               , (SELECT every FROM ${this.dbName} WHERE contextid = ${contextId})
             );
@@ -67,7 +63,7 @@ class ContextCurrent extends BaseModel{
     VALUES (  ${contextId}
               , (SELECT isset FROM ${this.dbName} WHERE contextid = ${contextId})
               , (SELECT every FROM ${this.dbName} WHERE contextid = ${contextId})
-              , "${until}"
+              , ${typeof until === "undefined" ? "null" : '"' + until + '"' }
             );
     `).toString();
     this.db.run(sql);

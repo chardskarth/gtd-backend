@@ -124,8 +124,6 @@ export function reset() {
   var retVal: BusinessLogicResult;
   try{
     db.run("Begin");
-    contextcurrent.removeIsSetInAll(IsSetType.unset);
-    contextcurrent.removeIsSetInAll(IsSetType.manual);
     contextcurrent.removeIsSetInAll();
     contextcurrent.automaticContextSet();
     db.run("End");
