@@ -6,10 +6,9 @@ import Promise from "bluebird";
 
 describe("task", function() {
   describe("create", function() {
-    it("Should work fine");
-    it("Should add a task");
     it("Should throw if there is no name provided");
     it("Should throw if there is no desscription provided");
+    it("Should add a task");
     it("done is false by default");
     it("parenttask is null/undefined by default");
   });

@@ -9,6 +9,9 @@ var knex = _knex({
 
 abstract class BaseModel{
   constructor(public dbName, public fields){ }
+  static GetLastInsertRowid() {
+    return getDb().exec("select last_insert_rowid();")[0].values[0][0]
+  }
   static MapExecResult(result){
     var retVal = [];
     for (var i = 0; i < result.values.length; i++) {

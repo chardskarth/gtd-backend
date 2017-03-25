@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { Migrator, Debug } from "./../helpers/Migrator";
+import Promise = require("bluebird");
 
 // var openDatabase = require('websql');
 import * as SQL from "sql.js";
@@ -49,7 +50,7 @@ export function createDb(){
   return _db;
 }
 
-export function getDb(){
+export function getDb(): SQL.Database {
   if(!_db){
     var filebuffer;
     try {
@@ -67,6 +68,34 @@ export function getDb(){
 
 export function saveDb() {
   fs.writeFileSync(FILE_NAME, new Buffer(_db.export()));
+}
+
+var _lastTransactionDefer: Promise.Resolver<SQL.Database> = Promise.defer() as any;
+var trans: Promise.Resolver<SQL.Database>[] = [] as  any;
+export function beginTransaction() {
+  return Promise.coroutine(function * () {
+    var db = getDb();
+    db.exec("Begin");
+    trans.push(Promise.defer() as any);
+    var promiseToWait;
+    var transBeforeThis = trans[trans.length - 2];
+    if(transBeforeThis) {  
+      promiseToWait = transBeforeThis.promise;
+    } else {
+      promiseToWait = Promise.resolve();
+    }
+    yield promiseToWait;
+  })();
+}
+
+export function endTransaction() {
+  return Promise.coroutine(function *(){ 
+    var db = getDb();
+    db.exec("End");
+    trans[trans.length - 1].resolve();
+    yield trans[trans.length - 1].promise;
+    trans.pop();
+  })();
 }
 
 export var DBNames = {

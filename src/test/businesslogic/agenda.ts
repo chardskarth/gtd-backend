@@ -1,15 +1,21 @@
-import * as chai from "chai";
+import {expect} from "chai";
 import * as chaiPromise from "chai-as-promised";
 import Promise from "bluebird";
+import * as agenda from "./../../businesslogic/agenda";
 
 // chai.use(chaiPromise);
 
 describe("agenda", function() {
   describe("create", function() {
-    it("Should work fine");
+    it("Should throw if there is no name provided", function(){
+      var res = agenda.create(undefined, "desc");
+      expect(res.error).to.be.instanceof(Error)
+    });
+    it("Should throw if there is no desscription provided", function(){
+      var res = agenda.create("name", undefined);
+      expect(res.error).to.be.instanceof(Error)
+    });
     it("Should add an agenda");
-    it("Should throw if there is no name provided");
-    it("Should throw if there is no desscription provided");
   });
 
   describe("sort", function(){

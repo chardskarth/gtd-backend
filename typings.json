@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bluebird": "registry:dt/bluebird#3.5.0+20170316082528",
     "knex": "registry:dt/knex#0.0.0+20170202190133",
     "sql.js": "registry:dt/sql.js#0.0.0+20160915014424"
   },

@@ -4,7 +4,7 @@ import {context} from "./../model/context";
 import {taskcontext} from "./../model/taskcontext";
 import {contextcurrent, IsSetType} from "./../model/contextcurrent";
 import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers/BusinessLogicCommon";
-import {getDb} from "./../helpers/ModelCommon";
+import {getDb, saveDb} from "./../helpers/ModelCommon";
 import {isTimeValid} from "./../helpers/Extension";
 import {sort as sortModel} from "./../model/sort";
 import moment = require("moment");
@@ -12,18 +12,24 @@ import moment = require("moment");
 
 export function create(name, description){
   var db = getDb();
-  db.run("Begin");
-  context.add(name, description);
-  var contextId = db.exec("select last_insert_rowid();")[0].values[0][0];
-  
-  // if there is a folder, there is a sort there, else, theres a sort here
-  sortModel.getSortKeys(context.dbName)
-    .forEach(function(sortKey) {
-      sortModel.add(sortKey, context.dbName, contextId);
-  });
-
-  db.run("End");
-  return BusinessLogicResult.OK();
+  var retVal;
+  try {
+    db.run("Begin");
+    context.add(name, description);
+    var contextId = db.exec("select last_insert_rowid();")[0].values[0][0];
+    
+    // if there is a folder, there is a sort there, else, theres a sort here
+    sortModel.getSortKeys(context.dbName)
+      .forEach(function(sortKey) {
+        sortModel.add(sortKey, context.dbName, contextId);
+    });
+    db.run("End");
+    saveDb();
+    retVal = BusinessLogicResult.OK();
+  } catch (err) {
+    retVal = BusinessLogicResult.Error(err);
+  }
+  return retVal;
 }
 
 export function sort(contextId, toInsertTo){
@@ -33,12 +39,12 @@ export function sort(contextId, toInsertTo){
     db.run("Begin");
     var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
     sortModel.updateSortOrder(context.dbName, contextId, sortKey, toInsertTo);
+    db.run("End");
     retVal = BusinessLogicResult.OK();
+    saveDb();
   } catch(err){
     db.run('Rollback');
     retVal = BusinessLogicResult.Error(err);
-  } finally {
-    db.run("End");
   }
   return retVal;
 }
@@ -70,6 +76,7 @@ export function sortTask(taskId, toInsertTo){
     var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
     sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
     db.run("End");
+    saveDb();
     retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
@@ -95,6 +102,7 @@ export function moveTask(taskId, newContextId) {
     var newSortKey = sortModel.getSortKeys(tableName, false, false, newContextId)[1];
     sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey)
     db.run("End");
+    saveDb();
     retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
@@ -111,6 +119,7 @@ export function setEvery(contextId, everyStatement) {
     db.run("Begin");
     contextcurrent.setEvery(contextId, everyStatement);
     db.run("End");
+    saveDb();
     retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
@@ -127,6 +136,7 @@ export function reset() {
     contextcurrent.removeIsSetInAll();
     contextcurrent.automaticContextSet();
     db.run("End");
+    saveDb();
     retVal = BusinessLogicResult.OK();
   } catch(err){
     db.run("Rollback");
@@ -144,6 +154,7 @@ export function currentContexts() {
     contextcurrent.automaticContextSet();
     var result = contextcurrent.currentContexts();
     db.run("End");
+    saveDb();
     retVal = BusinessLogicResult.OK(result);
   } catch(err){
     db.run("Rollback");
