@@ -1,6 +1,6 @@
 import * as chai from "chai";
 import * as chaiPromise from "chai-as-promised";
-import Promise from "bluebird";
+import * as Promise from 'bluebird';
 
 // chai.use(chaiPromise);
 

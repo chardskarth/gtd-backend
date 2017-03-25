@@ -24,7 +24,8 @@ class Folder extends BaseModel{
       .where("key", key).andWhere("tablename", folder.dbName)
       .orderBy("ordervalue")
       .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${folder.dbName}.id`);
-    return BaseModel.BuildWhere(whereObj, res);
+    var sql = BaseModel.BuildWhere(whereObj, res).toString();
+    return this.db.exec(sql).map(BaseModel.MapExecResult)[0];
   }
 }
 

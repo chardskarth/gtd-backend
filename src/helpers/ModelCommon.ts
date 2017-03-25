@@ -70,14 +70,13 @@ export function saveDb() {
   fs.writeFileSync(FILE_NAME, new Buffer(_db.export()));
 }
 
-var _lastTransactionDefer: Promise.Resolver<SQL.Database> = Promise.defer() as any;
 var trans: Promise.Resolver<SQL.Database>[] = [] as  any;
 export function beginTransaction() {
   return Promise.coroutine(function * () {
     var db = getDb();
     db.exec("Begin");
     trans.push(Promise.defer() as any);
-    var promiseToWait;
+    var promiseToWait: Promise<any>;
     var transBeforeThis = trans[trans.length - 2];
     if(transBeforeThis) {  
       promiseToWait = transBeforeThis.promise;
@@ -90,11 +89,20 @@ export function beginTransaction() {
 
 export function endTransaction() {
   return Promise.coroutine(function *(){ 
-    var db = getDb();
+    var db = _db;
     db.exec("End");
-    trans[trans.length - 1].resolve();
-    yield trans[trans.length - 1].promise;
-    trans.pop();
+    saveDb();
+    trans[0].resolve();
+    trans.shift();
+  })();
+}
+
+export function rollbackTransaction() {
+  return Promise.coroutine(function *(){ 
+    var db = _db;
+    db.exec("Rollback");
+    trans[0].resolve();
+    trans.shift();
   })();
 }
 

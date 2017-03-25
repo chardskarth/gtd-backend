@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import * as chaiPromise from "chai-as-promised";
-import Promise from "bluebird";
+import * as Promise from 'bluebird';
 import * as agenda from "./../../businesslogic/agenda";
 
 // chai.use(chaiPromise);

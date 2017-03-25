@@ -15,56 +15,38 @@ util.inherits(TaskList, cmdln.Cmdln);
 
 var command = CmdlnCreator(TaskList);
 command.create("create", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = tasklist.create.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.create.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help('Add tasks: name, description, folderId, contextId, agendaId')
   ;
 
 command.create("sort", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = tasklist.sort.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.sort.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("Sort task: taskid, sortorder(to insert to)")
 
 command.create("list", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = tasklist.list.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.list.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("list the task")
 
 command.create("list-by-parent", function(subcmd, opts, args, cb) {
-    var db = getDb();
-
-    var allOrNotDone = typeof opts.allOrNotDone === "undefined" 
-      ? undefined : Boolean(parseInt(opts.allOrNotDone));
-    var res = tasklist.listByParent.apply(tasklist, args);
-    console.log(res);
-
-    saveDb();
+    tasklist.listByParent.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("list by parent: parentTaskId, allOrNotDone")
   .aliases(["list-p"]);
     
 command.create("sort-by-parent", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = tasklist.sortByParent.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.sortByParent.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("sort by parent: taskId, toInsertTo")
@@ -72,32 +54,20 @@ command.create("sort-by-parent", function(subcmd, opts, args, cb) {
 
 
 command.create("set-parent", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    //opts is 
-    var res = tasklist.setParentTask.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.setParentTask.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("set parenttask: taskId, parentTaskId, shouldForce")
 command.create("done", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    //opts is 
-    var res = tasklist.markDone.apply(tasklist, args);
-    console.log(res);
-    
-    saveDb();
+    tasklist.markDone.apply(tasklist, args)
+      .then(res => console.log(res) );
     cb();
   })
   .help("set task as done: taskId")
 command.create("undone", function(subcmd, opts, args, cb) {
-  var db = getDb();
-  //opts is 
-  var res = tasklist.unmarkDone.apply(tasklist, args);
-  console.log(res);
-  
-  saveDb();
+  tasklist.unmarkDone.apply(tasklist, args)
+    .then(res => console.log(res) );
   cb();
 })
 .help("set task as not yet done: taskId")

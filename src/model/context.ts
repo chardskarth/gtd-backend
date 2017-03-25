@@ -26,7 +26,8 @@ class Context extends BaseModel{
       .where("key", key).andWhere("tablename", context.dbName)
       .orderBy("ordervalue")
       .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${context.dbName}.id`);
-    return BaseModel.BuildWhere(whereObj, res);
+    var sql = BaseModel.BuildWhere(whereObj, res).toString();
+    return this.db.exec(sql).map(BaseModel.MapExecResult)[0];
   }
 }
 

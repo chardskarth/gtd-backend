@@ -4,85 +4,88 @@ import {context} from "./../model/context";
 import {taskcontext} from "./../model/taskcontext";
 import {contextcurrent, IsSetType} from "./../model/contextcurrent";
 import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers/BusinessLogicCommon";
-import {getDb, saveDb} from "./../helpers/ModelCommon";
+import {beginTransaction, endTransaction, rollbackTransaction} from "./../helpers/ModelCommon";
 import {isTimeValid} from "./../helpers/Extension";
 import {sort as sortModel} from "./../model/sort";
 import moment = require("moment");
+import * as Promise from "bluebird";
 
 
 export function create(name, description){
-  var db = getDb();
-  var retVal;
-  try {
-    db.run("Begin");
-    context.add(name, description);
-    var contextId = db.exec("select last_insert_rowid();")[0].values[0][0];
-    
-    // if there is a folder, there is a sort there, else, theres a sort here
-    sortModel.getSortKeys(context.dbName)
-      .forEach(function(sortKey) {
-        sortModel.add(sortKey, context.dbName, contextId);
-    });
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK();
-  } catch (err) {
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    var retVal;
+    yield beginTransaction();
+    try {
+      context.add(name, description);
+      var contextId = BaseModel.GetLastInsertRowid();
+      
+      // if there is a folder, there is a sort there, else, theres a sort here
+      sortModel.getSortKeys(context.dbName)
+        .forEach(function(sortKey) {
+          sortModel.add(sortKey, context.dbName, contextId);
+      });
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch (err) {
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function sort(contextId, toInsertTo){
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
-    sortModel.updateSortOrder(context.dbName, contextId, sortKey, toInsertTo);
-    db.run("End");
-    retVal = BusinessLogicResult.OK();
-    saveDb();
-  } catch(err){
-    db.run('Rollback');
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    var retVal: BusinessLogicResult;
+    yield beginTransaction();
+    try{
+      var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
+      sortModel.updateSortOrder(context.dbName, contextId, sortKey, toInsertTo);
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function list(){
-  var db = getDb();
-  var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
-  var sql = context.joinAllSort(sortKey, { }).toString();
-  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
-  return BusinessLogicResult.OK(result);
+  return Promise.coroutine(function* (...any) {
+    var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
+    var result = context.joinAllSort(sortKey, { });
+    return BusinessLogicResult.OK(result);
+  })();
 }
 
 export function listTasks(contextId, allOrNotDone) {
-  var db =  getDb();
-  var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
-  var whereObj = getAllOrNotDone(allOrNotDone);
-  var sql = task.joinAllSort(sortKey, whereObj).toString();
-  var result = db.exec(sql).map(BaseModel.MapExecResult)[0];
-  return BusinessLogicResult.OK(result);
+  return Promise.coroutine(function* () {
+    var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
+    var whereObj = getAllOrNotDone(allOrNotDone);
+    var result = task.joinAllSort(sortKey, whereObj).toString();
+    return BusinessLogicResult.OK(result);
+  })();
 }
 
 export function sortTask(taskId, toInsertTo){
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    var contextId = taskcontext.getAllBy({where: ["taskid", taskId]}
-      , taskcontext.getArrayFields("*"))[0].contextid;
-    var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
-    sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    var retVal: BusinessLogicResult;
+    yield beginTransaction();
+    try{
+      var contextId = taskcontext.getAllBy({where: ["taskid", taskId]}
+        , taskcontext.getArrayFields("*"))[0].contextid;
+      var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
+      sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
+      yield endTransaction();
+      
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function moveTask(taskId, newContextId) {
@@ -90,77 +93,77 @@ export function moveTask(taskId, newContextId) {
   newContextId = parseInt(newContextId);
   newContextId = isNaN(newContextId) ? 0 : newContextId;
 
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    var tableName = "task";
-    var oldContextId = taskcontext.updateContextId(taskId, newContextId);
+  return Promise.coroutine(function* (...any) {
+    var retVal: BusinessLogicResult;
+    yield beginTransaction();
+    try{
+      var tableName = "task";
+      var oldContextId = taskcontext.updateContextId(taskId, newContextId);
 
-    // get only sortKey for Agenda
-    var oldSortKey = sortModel.getSortKeys(tableName, false, false, oldContextId)[1];
-    var newSortKey = sortModel.getSortKeys(tableName, false, false, newContextId)[1];
-    sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey)
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+      // get only sortKey for Agenda
+      var oldSortKey = sortModel.getSortKeys(tableName, false, false, oldContextId)[1];
+      var newSortKey = sortModel.getSortKeys(tableName, false, false, newContextId)[1];
+      sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey)
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function setEvery(contextId, everyStatement) {
   contextId = parseInt(contextId);
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    contextcurrent.setEvery(contextId, everyStatement);
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* (...any) {
+    var retVal: BusinessLogicResult;
+    yield beginTransaction();
+    try{
+      contextcurrent.setEvery(contextId, everyStatement);
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function reset() {
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    contextcurrent.removeIsSetInAll();
-    contextcurrent.automaticContextSet();
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    var retVal: BusinessLogicResult;
+    yield beginTransaction();
+    try{
+      contextcurrent.removeIsSetInAll();
+      contextcurrent.automaticContextSet();
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function currentContexts() {
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    contextcurrent.checkManualContextSet();
-    contextcurrent.automaticContextSet();
-    var result = contextcurrent.currentContexts();
-    db.run("End");
-    saveDb();
-    retVal = BusinessLogicResult.OK(result);
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    yield beginTransaction();
+    var retVal: BusinessLogicResult;
+    try{
+      contextcurrent.checkManualContextSet();
+      contextcurrent.automaticContextSet();
+      var result = contextcurrent.currentContexts();
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK(result);
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function set(contextId, until){
@@ -168,34 +171,36 @@ export function set(contextId, until){
   if(until && !isTimeValid(until)) {
     throw Error("until is not a valid time format.");
   }
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    contextcurrent.upsertIsSetByContextId(contextId, IsSetType.manual);
-    until && contextcurrent.upsertUntil(contextId, until);
-    db.run("End");
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    yield beginTransaction();
+    var retVal: BusinessLogicResult;
+    try{
+      contextcurrent.upsertIsSetByContextId(contextId, IsSetType.manual);
+      until && contextcurrent.upsertUntil(contextId, until);
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }
 
 export function unset(contextId) {
   contextId = parseInt(contextId);
-  var db = getDb();
-  var retVal: BusinessLogicResult;
-  try{
-    db.run("Begin");
-    contextcurrent.upsertIsSetByContextId(contextId, IsSetType.unset);
-    contextcurrent.upsertUntil(contextId, null);
-    db.run("End");
-    retVal = BusinessLogicResult.OK();
-  } catch(err){
-    db.run("Rollback");
-    retVal = BusinessLogicResult.Error(err);
-  }
-  return retVal;
+  return Promise.coroutine(function* () {
+    yield beginTransaction();
+    var retVal: BusinessLogicResult;
+    try{
+      contextcurrent.upsertIsSetByContextId(contextId, IsSetType.unset);
+      contextcurrent.upsertUntil(contextId, null);
+      yield endTransaction();
+      retVal = BusinessLogicResult.OK();
+    } catch(err){
+      yield rollbackTransaction();
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
+  })();
 }

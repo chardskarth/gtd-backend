@@ -44,13 +44,15 @@ class Task extends BaseModel{
       .where("key", key).andWhere("tablename", task.dbName)
       .orderBy("ordervalue")
       .innerJoin(this.dbName, `${DBNames.sort}.tableid`, `${task.dbName}.id`);
-    return BaseModel.BuildWhere(whereObj, res)
+    var sql = BaseModel.BuildWhere(whereObj, res)
       .leftJoin(DBNames.taskfolder, `${task.dbName}.id`, FieldNames["taskfolder.taskid"])
       .leftJoin(DBNames.folder, FieldNames["taskfolder.folderid"], FieldNames["folder.id"])
       .leftJoin(DBNames.taskcontext, `${DBNames.task}.id`, FieldNames["taskcontext.taskid"])
       .leftJoin(DBNames.context, FieldNames["taskcontext.contextid"], FieldNames["context.id"])
       .leftJoin(DBNames.taskagenda, `${DBNames.task}.id`, FieldNames["taskagenda.taskid"])
-      .leftJoin(DBNames.agenda, FieldNames["taskagenda.agendaid"], FieldNames["agenda.id"]);
+      .leftJoin(DBNames.agenda, FieldNames["taskagenda.agendaid"], FieldNames["agenda.id"])
+    .toString();
+    return this.db.exec(sql).map(BaseModel.MapExecResult)[0];
   }
 }
 

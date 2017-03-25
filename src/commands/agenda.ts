@@ -16,64 +16,47 @@ util.inherits(Agendapage, cmdln.Cmdln);
 var command = CmdlnCreator(Agendapage);
 command.create("create", function(subcmd, opts, args, cb) {
     var db = getDb();
-    var res = agendapage.create.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.create.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help('Add agenda: name, description')
   ;
 
 command.create("sort", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = agendapage.sort.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.sort.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help("Sort agenda: taskid, sortorder(to insert to)")
   ;
 
 command.create("list", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = agendapage.list.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.list.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help("list the agendas")
 
 command.create("list-task", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = agendapage.listTasks.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.listTasks.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help("list tasks: agendaId, allOrNotDone")
   .aliases(["list-t"]);
 
 command.create("sort-task", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = agendapage.sortTask.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.sortTask.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help("sort the task: taskId, toInsertTo")
   .aliases(["sort-t"]);
 
 command.create("move-task", function(subcmd, opts, args, cb) {
-    var db = getDb();
-    var res = agendapage.moveTask.apply(agendapage, args);
-    console.log(res);
-    
-    saveDb();
+    agendapage.moveTask.apply(agendapage, args)
+      .then(function(res){ console.log(res); });
     cb();
   })
   .help("move the task: taskId, newAgendaId")
