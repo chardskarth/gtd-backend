@@ -39,7 +39,9 @@ class Sort extends BaseModel{
     var db = this.db;
     var dbName = this.dbName;
     var currentDocument = db.exec(SQLBuilder(this.dbName)
-      .select("*").where("tableid", tableId)
+      .select("*")
+      .where("key", sortKey)
+      .andWhere("tableid", tableId)
       .andWhere("tablename", tableName)
       .toString())
       .map(BaseModel.MapExecResult)[0]; //exec allows multiple query, sheesh.
@@ -132,7 +134,7 @@ class Sort extends BaseModel{
     } // else if !oldSortKey
   }
   
-  getSortKeys(prefix, folderId?, agendaId?, contextId?, parentTaskId?): any[]{
+  getSortKeys(prefix, folderId?, contextId?, agendaId?, parentTaskId?): any[]{
     var retVal = [];
     var hasFolder = !!folderId;
     var hasAgenda = !!agendaId;
@@ -145,12 +147,12 @@ class Sort extends BaseModel{
       retVal.push(`${prefix}_folder:${folderId}`);
     }
 
-    if(hasAgenda) {
-      retVal.push(`${prefix}_agenda:${agendaId}`);
-    }
-
     if(hasContext) {
       retVal.push(`${prefix}_context:${contextId}`);
+    }
+
+    if(hasAgenda) {
+      retVal.push(`${prefix}_agenda:${agendaId}`);
     }
 
     if(hasParentTask) {

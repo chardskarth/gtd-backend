@@ -20,10 +20,8 @@ export function create(name, description){
       var contextId = BaseModel.GetLastInsertRowid();
       
       // if there is a folder, there is a sort there, else, theres a sort here
-      sortModel.getSortKeys(context.dbName)
-        .forEach(function(sortKey) {
-          sortModel.add(sortKey, context.dbName, contextId);
-      });
+      var sortKey = sortModel.getSortKeys(context.dbName)[0];
+      sortModel.add(sortKey, context.dbName, contextId);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
     } catch (err) {
@@ -39,7 +37,7 @@ export function sort(contextId, toInsertTo){
     var retVal: BusinessLogicResult;
     yield beginTransaction();
     try{
-      var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
+      var sortKey = sortModel.getSortKeys(context.dbName)[0];
       sortModel.updateSortOrder(context.dbName, contextId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
@@ -53,7 +51,7 @@ export function sort(contextId, toInsertTo){
 
 export function list(){
   return Promise.coroutine(function* (...any) {
-    var sortKey = sortModel.getSortKeys(context.dbName).reduce(x => x); //getfirst
+    var sortKey = sortModel.getSortKeys(context.dbName)[0]; //getfirst
     var result = context.joinAllSort(sortKey, { });
     return BusinessLogicResult.OK(result);
   })();
@@ -61,7 +59,7 @@ export function list(){
 
 export function listTasks(contextId, allOrNotDone) {
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
+    var sortKey = sortModel.getSortKeys("task", false, contextId)[1];
     var whereObj = getAllOrNotDone(allOrNotDone);
     var result = task.joinAllSort(sortKey, whereObj).toString();
     return BusinessLogicResult.OK(result);
@@ -75,7 +73,7 @@ export function sortTask(taskId, toInsertTo){
     try{
       var contextId = taskcontext.getAllBy({where: ["taskid", taskId]}
         , taskcontext.getArrayFields("*"))[0].contextid;
-      var sortKey = sortModel.getSortKeys("task", false, false, contextId)[1];
+      var sortKey = sortModel.getSortKeys("task", false, contextId)[1];
       sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
       yield endTransaction();
       
@@ -101,8 +99,8 @@ export function moveTask(taskId, newContextId) {
       var oldContextId = taskcontext.updateContextId(taskId, newContextId);
 
       // get only sortKey for Agenda
-      var oldSortKey = sortModel.getSortKeys(tableName, false, false, oldContextId)[1];
-      var newSortKey = sortModel.getSortKeys(tableName, false, false, newContextId)[1];
+      var oldSortKey = sortModel.getSortKeys(tableName, false, oldContextId)[1];
+      var newSortKey = sortModel.getSortKeys(tableName, false, newContextId)[1];
       sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey)
       yield endTransaction();
       retVal = BusinessLogicResult.OK();

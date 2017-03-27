@@ -109,7 +109,11 @@ abstract class BaseModel{
 
   getById(id, arrFields){
     var sql = knex.select(arrFields).where("id", id).from(this.dbName).toString();
-    return this.db.exec(sql).map(BaseModel.MapExecResult)[0][0];
+    var retVal = this.db.exec(sql).map(BaseModel.MapExecResult)[0];
+    if(!retVal) {
+      throw new Error(`${this.dbName} id not found: ${id}`);
+    }
+    return retVal[0];
   }
 
   getAllBy(whereObj, arrFields){

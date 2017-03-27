@@ -8,8 +8,11 @@ import * as SQL from "sql.js";
 
 var _db: SQL.Database;
 const FILE_NAME = "gtd.db";
+var isInMemoryDb = false;
 
 export function createDb(){
+  var db = getDb();
+
   var {agenda} = require("./../model/agenda");
   var {context} = require("./../model/context");
   var {folder} = require("./../model/folder");
@@ -20,14 +23,6 @@ export function createDb(){
   var {taskfolder} = require("./../model/taskfolder");
   var {sort} = require("./../model/sort");
   var {contextcurrent} = require("./../model/contextcurrent");
-  
-  //reading file from diskx`
-  try{
-    var filebuffer = fs.readFileSync(FILE_NAME);
-    _db = new SQL.Database(filebuffer);//openDatabase('gtd.db', '', 'description', 1);
-  } catch(err) {
-    _db = new SQL.Database();
-  }
   
   var M = new Migrator(_db);
   // M.setDebugLevel(Debug.HIGH);
@@ -52,29 +47,44 @@ export function createDb(){
 
 export function getDb(): SQL.Database {
   if(!_db){
-    var filebuffer;
-    try {
-     filebuffer = fs.readFileSync(FILE_NAME); 
-    } catch (error) {
-      if(error.message.indexOf("ENOENT:") != -1)
-        throw Error("DB not yet existing");
-      else 
-        throw error;
+    if(!isInMemoryDb) {
+      var filebuffer;
+      try {
+        filebuffer = fs.readFileSync(FILE_NAME); 
+        _db = new SQL.Database(filebuffer);
+      } catch (error) {
+        if(error.message.indexOf("ENOENT:") != -1) {
+          _db = new SQL.Database();
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      _db = new SQL.Database();
     }
-    _db = new SQL.Database(filebuffer);//openDatabase('gtd.db', '', 'description', 1);
   }
   return _db;
 }
 
 export function saveDb() {
-  fs.writeFileSync(FILE_NAME, new Buffer(_db.export()));
+  if(!isInMemoryDb) {
+    fs.writeFileSync(FILE_NAME, new Buffer(_db.export()));
+  }
+}
+
+export function setInMemoryDb(toSet?) {
+
+  if(isInMemoryDb === false && toSet === true || typeof toSet === "undefined") {
+    isInMemoryDb = true;
+  } else if(isInMemoryDb === true && toSet === false) {
+    isInMemoryDb = false;
+  }
+  return _db;
 }
 
 var trans: Promise.Resolver<SQL.Database>[] = [] as  any;
 export function beginTransaction() {
   return Promise.coroutine(function * () {
-    var db = getDb();
-    db.exec("Begin");
     trans.push(Promise.defer() as any);
     var promiseToWait: Promise<any>;
     var transBeforeThis = trans[trans.length - 2];
@@ -84,12 +94,14 @@ export function beginTransaction() {
       promiseToWait = Promise.resolve();
     }
     yield promiseToWait;
+    var db = getDb();
+    db.exec("Begin");
   })();
 }
 
 export function endTransaction() {
   return Promise.coroutine(function *(){ 
-    var db = _db;
+    var db = getDb();
     db.exec("End");
     saveDb();
     trans[0].resolve();
@@ -99,7 +111,7 @@ export function endTransaction() {
 
 export function rollbackTransaction() {
   return Promise.coroutine(function *(){ 
-    var db = _db;
+    var db = getDb();;
     db.exec("Rollback");
     trans[0].resolve();
     trans.shift();

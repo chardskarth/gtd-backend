@@ -12,7 +12,7 @@ import {allOrNotDone as getAllOrNotDone, BusinessLogicResult} from "./../helpers
 import {beginTransaction, endTransaction, rollbackTransaction} from "./../helpers/ModelCommon";
 import * as Promise from "bluebird";
 
-export function create(name, description, folderId, contextId, agendaId){
+export function create(name, description, folderId?, contextId?, agendaId?){
   return Promise.coroutine(function* () {
     var retVal;
     yield beginTransaction();
@@ -25,7 +25,7 @@ export function create(name, description, folderId, contextId, agendaId){
       
       // if there is a folder, there is a sort there, else, theres a sort here
       sortModel.getSortKeys("task", folderId, contextId, agendaId)
-        .forEach(function(sortKey) {
+        .forEach(function(sortKey) { 
           sortModel.add(sortKey, "task", taskId);
       });
 
@@ -33,7 +33,7 @@ export function create(name, description, folderId, contextId, agendaId){
       typeof contextId !== "undefined" && taskcontext.add(taskId, contextId);
       typeof agendaId !== "undefined" && taskagenda.add(taskId, agendaId);
       yield endTransaction();
-      retVal = BusinessLogicResult.OK();
+      retVal = BusinessLogicResult.OK(taskId);
     } catch(err) {
       yield rollbackTransaction();
       retVal = BusinessLogicResult.Error(err);
@@ -47,7 +47,7 @@ export function sort(taskId, toInsertTo){
     var retVal: BusinessLogicResult;
     yield beginTransaction();
     try{
-      var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
+      var sortKey = sortModel.getSortKeys(task.dbName)[0];
       sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
@@ -61,7 +61,7 @@ export function sort(taskId, toInsertTo){
 
 export function list(){
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("task").reduce(x => x); //getfirst
+    var sortKey = sortModel.getSortKeys(task.dbName)[0];
     var result = task.joinAllSort(sortKey, { });
     return BusinessLogicResult.OK(result);
   })();
@@ -69,7 +69,7 @@ export function list(){
 
 export function listByParent(parentTaskId, allOrNotDone){
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];
+    var sortKey = sortModel.getSortKeys(task.dbName, false, false, false, parentTaskId)[1];
     var whereObj = getAllOrNotDone(allOrNotDone);
     var result = task.joinAllSort(sortKey, whereObj);
     return BusinessLogicResult.OK(result);    
@@ -82,7 +82,7 @@ export function sortByParent(taskId, toInsertTo){
     var retVal: BusinessLogicResult;
     try{
       var parentTaskId = task.getById(taskId, task.getArrayFields("*")).parenttask;
-      var sortKey = sortModel.getSortKeys("task", false, false, false, parentTaskId)[1];
+      var sortKey = sortModel.getSortKeys(task.dbName, false, false, false, parentTaskId)[1];
       sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();

@@ -16,10 +16,8 @@ export function create(name, description){
       var folderId = BaseModel.GetLastInsertRowid();
       
       // if there is a folder, there is a sort there, else, theres a sort here
-      sortModel.getSortKeys("folder")
-        .forEach(function(sortKey) {
-          sortModel.add(sortKey, "folder", folderId);
-      });
+      var sortKey = sortModel.getSortKeys(folder.dbName);
+      sortModel.add(sortKey, "folder", folderId);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
     } catch (err) {
@@ -35,7 +33,7 @@ export function sort(folderId, toInsertTo){
     var retVal: BusinessLogicResult;
     yield beginTransaction();
     try{
-      var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
+      var sortKey = sortModel.getSortKeys(folder.dbName)[0];
       sortModel.updateSortOrder("folder", folderId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
@@ -49,7 +47,7 @@ export function sort(folderId, toInsertTo){
 
 export function list(){
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("folder").reduce(x => x); //getfirst
+    var sortKey = sortModel.getSortKeys(folder.dbName)[0];
     var result = folder.joinAllSort(sortKey, { })
     return BusinessLogicResult.OK(result);
   })();
@@ -88,7 +86,7 @@ export function deleteFolder(folderId, shouldForce) {
 
 export function listTasks(folderId, allOrNotDone) {
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("task", folderId)[0];
+    var sortKey = sortModel.getSortKeys(task.dbName, folderId)[0];
     var whereObj = getAllOrNotDone(allOrNotDone);
     var result = task.joinAllSort(sortKey, whereObj);
     return BusinessLogicResult.OK(result);
@@ -102,7 +100,7 @@ export function sortTask(taskId, toInsertTo){
     try{
       var folderId = taskfolder.getAllBy({where: ["taskid", taskId]}
         , taskfolder.getArrayFields("*"))[0].folderid;
-      var sortKey = sortModel.getSortKeys("task", folderId)[0];
+      var sortKey = sortModel.getSortKeys(task.dbName, folderId)[0];
       sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();

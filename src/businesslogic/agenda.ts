@@ -11,7 +11,7 @@ Promise.config({
   longStackTraces: true
 })
 
-export function create(name, description){
+export function create(name, description): Promise<BusinessLogicResult>{
   return Promise.coroutine(function *() {
     var retVal: BusinessLogicResult;
     yield beginTransaction();
@@ -19,14 +19,11 @@ export function create(name, description){
       agenda.add(name, description);
       var agendaId = BaseModel.GetLastInsertRowid();
       // if there is a folder, there is a sort there, else, theres a sort here
-      sortModel.getSortKeys(agenda.dbName)
-        .forEach(function(sortKey) {
-          sortModel.add(sortKey, agenda.dbName, agendaId);
-      });
+      var sortKey = sortModel.getSortKeys(agenda.dbName)[0];
+      sortModel.add(sortKey, agenda.dbName, agendaId);
       yield endTransaction();
-      retVal = BusinessLogicResult.OK();
+      retVal = BusinessLogicResult.OK(agendaId);
     } catch(err){
-      console.log(err);
       yield rollbackTransaction();
       retVal = BusinessLogicResult.Error(err);
     }
@@ -37,9 +34,9 @@ export function create(name, description){
 export function sort(agendaId, toInsertTo){
   return Promise.coroutine(function *() {
     var retVal: BusinessLogicResult;
+    yield beginTransaction();
     try{
-      yield beginTransaction();
-      var sortKey = sortModel.getSortKeys(agenda.dbName).reduce(x => x); //getfirst
+      var sortKey = sortModel.getSortKeys(agenda.dbName)[0];
       sortModel.updateSortOrder(agenda.dbName, agendaId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
@@ -53,31 +50,38 @@ export function sort(agendaId, toInsertTo){
 
 export function list(){
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys(agenda.dbName).reduce(x => x); //getfirst
+    var sortKey = sortModel.getSortKeys(agenda.dbName)[0]; //getfirst
     var result = agenda.joinAllSort(sortKey, { });
     return BusinessLogicResult.OK(result);
   })();
 }
 
-export function listTasks(agendaId, allOrNotDone) {
+export function listTasks(agendaId, allOrNotDone?) {
   return Promise.coroutine(function* (...any) {
-    var sortKey = sortModel.getSortKeys("task", false, agendaId)[1];
-    var whereObj = getAllOrNotDone(allOrNotDone);
-    var result = task.joinAllSort(sortKey, whereObj);
-    return BusinessLogicResult.OK(result);
+    var retVal;
+    try {
+      //test if it exist
+      agenda.getById(agendaId, "id");
+      var sortKey = sortModel.getSortKeys(task.dbName, false, false, agendaId)[1];
+      var whereObj = getAllOrNotDone(allOrNotDone);
+      var result = task.joinAllSort(sortKey, whereObj);
+      retVal = BusinessLogicResult.OK(result);
+    } catch(err) {
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
   })();
 }
 
 export function sortTask(taskId, toInsertTo) {
   return Promise.coroutine(function* () {
     var retVal: BusinessLogicResult;
+    yield beginTransaction();
     try{
-      yield beginTransaction();
-      var taskid = taskId;
       var agendaId = taskagenda.getAllBy({where: ["taskid", taskId]}
         , taskagenda.getArrayFields("*"))[0].agendaid;
-      var sortKey = sortModel.getSortKeys("task", false, agendaId)[1];
-      sortModel.updateSortOrder("task", taskId, sortKey, toInsertTo);
+      var sortKey = sortModel.getSortKeys(task.dbName, false, false, agendaId)[1];
+      sortModel.updateSortOrder(task.dbName, taskId, sortKey, toInsertTo);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
     } catch(err){
@@ -95,14 +99,17 @@ export function moveTask(taskId, newAgendaId) {
 
   return Promise.coroutine(function* () {
     var retVal: BusinessLogicResult;
+    yield beginTransaction();
     try{
-      yield beginTransaction();
+      //test if it exist
+      task.getById(taskId, "id");
+      newAgendaId && agenda.getById(newAgendaId, "id");
       var tableName = "task";
       var oldAgendaId = taskagenda.updateAgendaId(taskId, newAgendaId);
 
       // get only sortKey for Agenda
-      var oldSortKey = sortModel.getSortKeys(tableName, false, oldAgendaId)[1];
-      var newSortKey = sortModel.getSortKeys(tableName, false, newAgendaId)[1];
+      var oldSortKey = sortModel.getSortKeys(tableName, false, false, oldAgendaId)[1];
+      var newSortKey = sortModel.getSortKeys(tableName, false, false, newAgendaId)[1];
       sortModel.updateAndDecrement(tableName, taskId, oldSortKey, newSortKey);
       yield endTransaction();
       retVal = BusinessLogicResult.OK();
