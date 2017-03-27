@@ -234,7 +234,6 @@ describe("context", function() {
       })();
     });
   });
-  });
   
   describe("set every", function(){
     it("Should work fine");
