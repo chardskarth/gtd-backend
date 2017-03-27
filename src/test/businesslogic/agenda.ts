@@ -6,7 +6,6 @@ import {BusinessLogicResult} from "./../../helpers/BusinessLogicCommon";
 import {getExpectError as _getExpectError} from "./../common";
 import {createDb, setInMemoryDb, saveDb} from "./../../helpers/ModelCommon";
 var expectError = _getExpectError(expect);
-// chai.use(chaiPromise);
 
 describe("agenda", function() {
   before(function() {

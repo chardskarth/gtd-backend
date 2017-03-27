@@ -158,7 +158,6 @@ class Sort extends BaseModel{
     if(hasParentTask) {
       retVal.push(`${prefix}_parenttask:${parentTaskId}`);
     }
-
     return retVal;
   }
 }

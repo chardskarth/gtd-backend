@@ -69,10 +69,16 @@ export function list(){
 
 export function listByParent(parentTaskId, allOrNotDone){
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys(task.dbName, false, false, false, parentTaskId)[1];
-    var whereObj = getAllOrNotDone(allOrNotDone);
-    var result = task.joinAllSort(sortKey, whereObj);
-    return BusinessLogicResult.OK(result);    
+    var retVal;
+    try {
+      var sortKey = sortModel.getSortKeys(task.dbName, false, false, false, parentTaskId)[1];
+      var whereObj = getAllOrNotDone(allOrNotDone);
+      var result = task.joinAllSort(sortKey, whereObj);
+      retVal = BusinessLogicResult.OK(result);
+    }catch(err) {
+      retVal = BusinessLogicResult.OK(err);
+    }
+    return retVal
   })();
 }
 

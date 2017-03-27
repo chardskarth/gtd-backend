@@ -23,7 +23,7 @@ export function create(name, description){
       var sortKey = sortModel.getSortKeys(context.dbName)[0];
       sortModel.add(sortKey, context.dbName, contextId);
       yield endTransaction();
-      retVal = BusinessLogicResult.OK();
+      retVal = BusinessLogicResult.OK(contextId);
     } catch (err) {
       yield rollbackTransaction();
       retVal = BusinessLogicResult.Error(err);
@@ -57,12 +57,20 @@ export function list(){
   })();
 }
 
-export function listTasks(contextId, allOrNotDone) {
+export function listTasks(contextId, allOrNotDone?) {
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys("task", false, contextId)[1];
-    var whereObj = getAllOrNotDone(allOrNotDone);
-    var result = task.joinAllSort(sortKey, whereObj).toString();
-    return BusinessLogicResult.OK(result);
+    var retVal;
+    try{
+      //test context exist
+      context.getById(contextId, "id");
+      var sortKey = sortModel.getSortKeys("task", false, contextId)[1];
+      var whereObj = getAllOrNotDone(allOrNotDone);
+      var result = task.joinAllSort(sortKey, whereObj);
+      retVal = BusinessLogicResult.OK(result);
+    } catch (err) {
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
   })();
 }
 
@@ -95,6 +103,8 @@ export function moveTask(taskId, newContextId) {
     var retVal: BusinessLogicResult;
     yield beginTransaction();
     try{
+      task.getById(taskId, "id");
+      newContextId && context.getById(newContextId, "id");
       var tableName = "task";
       var oldContextId = taskcontext.updateContextId(taskId, newContextId);
 

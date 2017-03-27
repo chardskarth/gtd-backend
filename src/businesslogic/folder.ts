@@ -19,7 +19,7 @@ export function create(name, description){
       var sortKey = sortModel.getSortKeys(folder.dbName);
       sortModel.add(sortKey, "folder", folderId);
       yield endTransaction();
-      retVal = BusinessLogicResult.OK();
+      retVal = BusinessLogicResult.OK(folderId);
     } catch (err) {
       yield rollbackTransaction();
       retVal = BusinessLogicResult.Error(err);
@@ -86,10 +86,17 @@ export function deleteFolder(folderId, shouldForce) {
 
 export function listTasks(folderId, allOrNotDone) {
   return Promise.coroutine(function* () {
-    var sortKey = sortModel.getSortKeys(task.dbName, folderId)[0];
-    var whereObj = getAllOrNotDone(allOrNotDone);
-    var result = task.joinAllSort(sortKey, whereObj);
-    return BusinessLogicResult.OK(result);
+    var retVal;
+    try {
+      folder.getById(folderId, "*");
+      var sortKey = sortModel.getSortKeys(task.dbName, folderId)[0];
+      var whereObj = getAllOrNotDone(allOrNotDone);
+      var result = task.joinAllSort(sortKey, whereObj);
+      retVal = BusinessLogicResult.OK(result);
+    } catch(err) {
+      retVal = BusinessLogicResult.Error(err);
+    }
+    return retVal;
   })();
 }
 
@@ -121,6 +128,9 @@ export function moveTask(taskId, newFolderId, shouldForce) {
     var retVal: BusinessLogicResult;
     yield beginTransaction();
     try{
+      //test if it exist
+      task.getById(taskId, "id");
+      newFolderId && folder.getById(newFolderId, "id");
       var affectectedTask:any
         = task.getAllBy({where: ["id", taskId]}, task.getArrayFields("*"))[0];
       if(affectectedTask.parenttask && !shouldForce) {

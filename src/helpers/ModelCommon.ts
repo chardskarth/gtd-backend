@@ -45,6 +45,10 @@ export function createDb(){
   return _db;
 }
 
+export function unsetDb(){
+  _db = null;
+}
+
 export function getDb(): SQL.Database {
   if(!_db){
     if(!isInMemoryDb) {
